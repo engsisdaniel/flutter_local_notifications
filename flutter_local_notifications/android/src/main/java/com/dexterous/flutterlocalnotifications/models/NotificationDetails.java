@@ -30,6 +30,7 @@ public class NotificationDetails {
     private static final String CALLED_AT = "calledAt";
     private static final String REPEAT_INTERVAL = "repeatInterval";
     private static final String REPEAT_TIME = "repeatTime";
+    private static final String REPEAT_MINUTES = "repeatMinutes";
     private static final String PLATFORM_SPECIFICS = "platformSpecifics";
     private static final String AUTO_CANCEL = "autoCancel";
     private static final String ONGOING = "ongoing";
@@ -138,6 +139,7 @@ public class NotificationDetails {
     public NotificationStyle style;
     public StyleInformation styleInformation;
     public RepeatInterval repeatInterval;
+    public Long repeatMinutes;
     public Time repeatTime;
     public Long millisecondsSinceEpoch;
     public Long calledAt;
@@ -206,6 +208,9 @@ public class NotificationDetails {
         }
         if (arguments.containsKey(REPEAT_INTERVAL)) {
             notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
+        }
+        if (arguments.containsKey(REPEAT_MINUTES)) {
+            notificationDetails.repeatMinutes = (Long) arguments.get(REPEAT_MINUTES);
         }
         if (arguments.containsKey(REPEAT_TIME)) {
             @SuppressWarnings("unchecked")
