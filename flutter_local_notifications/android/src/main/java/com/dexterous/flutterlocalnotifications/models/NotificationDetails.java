@@ -139,7 +139,7 @@ public class NotificationDetails {
     public NotificationStyle style;
     public StyleInformation styleInformation;
     public RepeatInterval repeatInterval;
-    public Long repeatMinutes;
+    public Integer repeatMinutes;
     public Time repeatTime;
     public Long millisecondsSinceEpoch;
     public Long calledAt;
@@ -210,7 +210,7 @@ public class NotificationDetails {
             notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
         }
         if (arguments.containsKey(REPEAT_MINUTES)) {
-            notificationDetails.repeatMinutes = (Long) arguments.get(REPEAT_MINUTES);
+            notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
         }
         if (arguments.containsKey(REPEAT_TIME)) {
             @SuppressWarnings("unchecked")
