@@ -25,7 +25,7 @@ task:
   pub_cache:
     folder: ~/.pub-cache
   upgrade_script:
-    - flutter channel master
+    - flutter channel dev
     - flutter upgrade
   setup_script:
     - flutter config --enable-macos-desktop
@@ -73,4 +73,4 @@ task:
   test_script:
     - cd flutter_local_notifications
     - cd example
-    - flutter drive --driver=test_driver/flutter_local_notifications_e2e_test.dart test_driver/flutter_local_notifications_e2e.dart
+    - flutter drive --driver=test_driver/integration_test.dart --target=integration_test/flutter_local_notifications_test.dart

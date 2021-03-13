@@ -2,16 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications_platform_interface/flutter_local_notifications_platform_interface.dart';
 import 'package:timezone/timezone.dart';
 
 import 'helpers.dart';
 import 'platform_specifics/android/active_notification.dart';
+import 'platform_specifics/android/enums.dart';
 import 'platform_specifics/android/initialization_settings.dart';
 import 'platform_specifics/android/method_channel_mappers.dart';
 import 'platform_specifics/android/notification_channel.dart';
 import 'platform_specifics/android/notification_channel_group.dart';
 import 'platform_specifics/android/notification_details.dart';
+import 'platform_specifics/android/notification_sound.dart';
 import 'platform_specifics/ios/enums.dart';
 import 'platform_specifics/ios/initialization_settings.dart';
 import 'platform_specifics/ios/method_channel_mappers.dart';
@@ -122,10 +125,10 @@ class AndroidFlutterLocalNotificationsPlugin
     AndroidNotificationDetails notificationDetails, {
     @required bool androidAllowWhileIdle,
     String payload,
-    DateTimeComponents matchDateComponents,
+    DateTimeComponents matchDateTimeComponents,
   }) async {
     validateId(id);
-    validateDateIsInTheFuture(scheduledDate);
+    validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
     ArgumentError.checkNotNull(androidAllowWhileIdle, 'androidAllowWhileIdle');
     final Map<String, Object> serializedPlatformSpecifics =
         notificationDetails?.toMap() ?? <String, Object>{};
@@ -140,10 +143,10 @@ class AndroidFlutterLocalNotificationsPlugin
           'payload': payload ?? ''
         }
           ..addAll(scheduledDate.toMap())
-          ..addAll(matchDateComponents == null
+          ..addAll(matchDateTimeComponents == null
               ? <String, Object>{}
               : <String, Object>{
-                  'matchDateTimeComponents': matchDateComponents.index
+                  'matchDateTimeComponents': matchDateTimeComponents.index
                 }));
   }
 
@@ -248,6 +251,24 @@ class AndroidFlutterLocalNotificationsPlugin
     });
   }
 
+  /// Cancel/remove the notification with the specified id.
+  ///
+  /// This applies to notifications that have been scheduled and those that
+  /// have already been presented.
+  ///
+  /// The `tag` parameter specifies the Android tag. If it is provided,
+  /// then the notification that matches both the id and the tag will
+  /// be canceled. `tag` has no effect on other platforms.
+  @override
+  Future<void> cancel(int id, {String tag}) async {
+    validateId(id);
+
+    return _channel.invokeMethod('cancel', <String, Object>{
+      'id': id,
+      'tag': tag,
+    });
+  }
+
   /// Creates a notification channel group.
   ///
   /// This method is only applicable to Android versions 8.0 or newer.
@@ -295,6 +316,48 @@ class AndroidFlutterLocalNotificationsPlugin
               a['body'],
             ))
         ?.toList();
+  }
+
+  /// Returns the list of all notification channels.
+  ///
+  /// This method is only applicable on Android 8.0 or newer. On older versions,
+  /// it will return an empty list.
+  Future<List<AndroidNotificationChannel>> getNotificationChannels() async {
+    final List<Map<Object, Object>> notificationChannels =
+        await _channel.invokeListMethod('getNotificationChannels');
+
+    return notificationChannels
+        // ignore: always_specify_types
+        ?.map((a) => AndroidNotificationChannel(
+              a['id'],
+              a['name'],
+              a['description'],
+              groupId: a['groupId'],
+              showBadge: a['showBadge'],
+              importance: Importance(a['importance']),
+              playSound: a['playSound'],
+              sound: _getNotificationChannelSound(a),
+              enableLights: a['enableLights'],
+              enableVibration: a['enableVibration'],
+              vibrationPattern: a['vibrationPattern'],
+              ledColor: Color(a['ledColor']),
+            ))
+        ?.toList();
+  }
+
+  AndroidNotificationSound _getNotificationChannelSound(
+      Map<Object, Object> channelMap) {
+    final int soundSourceIndex = channelMap['soundSource'];
+    AndroidNotificationSound sound;
+    if (soundSourceIndex != null) {
+      if (soundSourceIndex ==
+          AndroidNotificationSoundSource.rawResource.index) {
+        sound = RawResourceAndroidNotificationSound(channelMap['sound']);
+      } else if (soundSourceIndex == AndroidNotificationSoundSource.uri.index) {
+        sound = UriAndroidNotificationSound(channelMap['sound']);
+      }
+    }
+    return sound;
   }
 
   Future<void> _handleMethod(MethodCall call) {
@@ -404,7 +467,7 @@ class IOSFlutterLocalNotificationsPlugin
     DateTimeComponents matchDateTimeComponents,
   }) async {
     validateId(id);
-    validateDateIsInTheFuture(scheduledDate);
+    validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
     ArgumentError.checkNotNull(uiLocalNotificationDateInterpretation,
         'uiLocalNotificationDateInterpretation');
     final Map<String, Object> serializedPlatformSpecifics =
@@ -593,7 +656,7 @@ class MacOSFlutterLocalNotificationsPlugin
     DateTimeComponents matchDateTimeComponents,
   }) async {
     validateId(id);
-    validateDateIsInTheFuture(scheduledDate);
+    validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
     final Map<String, Object> serializedPlatformSpecifics =
         notificationDetails?.toMap() ?? <String, Object>{};
     await _channel.invokeMethod(
