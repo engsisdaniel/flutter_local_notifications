@@ -232,8 +232,8 @@ class AndroidFlutterLocalNotificationsPlugin
     AndroidNotificationDetails? notificationDetails,
     String? payload,
     bool androidAllowWhileIdle = false,
-    DateTime initialDate, // Data de início para disparo do alarme
-    int repeatMinutes, // Minutos até o próximo alarme
+    DateTime? initialDate, // Data de início para disparo do alarme
+    int? repeatMinutes, // Minutos até o próximo alarme
   }) async {
     validateId(id);
     final Map<String, Object?> serializedPlatformSpecifics =
