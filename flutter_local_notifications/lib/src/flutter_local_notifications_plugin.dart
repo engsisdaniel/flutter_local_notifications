@@ -346,8 +346,8 @@ class FlutterLocalNotificationsPlugin {
     NotificationDetails notificationDetails, {
     String? payload,
     bool androidAllowWhileIdle = false,
-    DateTime initialDate, // Data de início para disparo do alarme
-    int repeatMinutes, // Minutos até o próximo alarme
+    DateTime? initialDate, // Data de início para disparo do alarme
+    int? repeatMinutes, // Minutos até o próximo alarme
   }) async {
     if (_platform.isAndroid) {
       await resolvePlatformSpecificImplementation<
