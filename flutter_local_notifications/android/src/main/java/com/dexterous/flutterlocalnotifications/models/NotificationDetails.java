@@ -144,8 +144,8 @@ public class NotificationDetails {
     public StyleInformation styleInformation;
     public RepeatInterval repeatInterval;
     public Integer repeatMinutes;
-    public LocalTime startTime;
-    public LocalTime endTime;
+    public String startTime;
+    public String endTime;
     public Time repeatTime;
     public Long millisecondsSinceEpoch;
     public Long calledAt;
@@ -219,10 +219,10 @@ public class NotificationDetails {
             notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
         }
         if (arguments.containsKey(START_TIME)) {
-            notificationDetails.startTime = LocalTime.parse((String) arguments.get(START_TIME), DateTimeFormatter.ofPattern("HH:mm"));
+            notificationDetails.startTime = (String) arguments.get(START_TIME);
         }
         if (arguments.containsKey(END_TIME)) {
-            notificationDetails.endTime = LocalTime.parse((String) arguments.get(END_TIME), DateTimeFormatter.ofPattern("HH:mm"));
+            notificationDetails.endTime = (String) arguments.get(END_TIME);
         }
         if (arguments.containsKey(REPEAT_TIME)) {
             @SuppressWarnings("unchecked")
