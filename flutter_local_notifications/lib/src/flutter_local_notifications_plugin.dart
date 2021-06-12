@@ -369,6 +369,8 @@ class FlutterLocalNotificationsPlugin {
     String? payload,
     bool androidAllowWhileIdle = false,
     DateTime? initialDate, // Data de início para disparo do alarme
+    String? startTime,
+    String? endTime,
     int? repeatMinutes, // Minutos até o próximo alarme
   }) async {
     if (kIsWeb) {
@@ -377,25 +379,48 @@ class FlutterLocalNotificationsPlugin {
     if (_platform.isAndroid) {
       await resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
-          ?.periodicallyShow(id, title, body, repeatInterval,
-              notificationDetails: notificationDetails.android,
-              payload: payload,
-              androidAllowWhileIdle: androidAllowWhileIdle,
-              initialDate: initialDate,
-              repeatMinutes: repeatMinutes);
+          ?.periodicallyShow(
+        id,
+        title,
+        body,
+        repeatInterval,
+        notificationDetails: notificationDetails.android,
+        payload: payload,
+        androidAllowWhileIdle: androidAllowWhileIdle,
+        initialDate: initialDate,
+        repeatMinutes: repeatMinutes,
+        startTime: startTime,
+        endTime: endTime,
+      );
     } else if (_platform.isIOS) {
       await resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
-          ?.periodicallyShow(id, title, body, repeatInterval,
-              notificationDetails: notificationDetails.iOS, payload: payload);
+          ?.periodicallyShow(
+        id,
+        title,
+        body,
+        repeatInterval,
+        notificationDetails: notificationDetails.iOS,
+        payload: payload,
+      );
     } else if (_platform.isMacOS) {
       await resolvePlatformSpecificImplementation<
               MacOSFlutterLocalNotificationsPlugin>()
-          ?.periodicallyShow(id, title, body, repeatInterval,
-              notificationDetails: notificationDetails.macOS, payload: payload);
+          ?.periodicallyShow(
+        id,
+        title,
+        body,
+        repeatInterval,
+        notificationDetails: notificationDetails.macOS,
+        payload: payload,
+      );
     } else {
-      await FlutterLocalNotificationsPlatform.instance
-          .periodicallyShow(id, title, body, repeatInterval);
+      await FlutterLocalNotificationsPlatform.instance.periodicallyShow(
+        id,
+        title,
+        body,
+        repeatInterval,
+      );
     }
   }
 

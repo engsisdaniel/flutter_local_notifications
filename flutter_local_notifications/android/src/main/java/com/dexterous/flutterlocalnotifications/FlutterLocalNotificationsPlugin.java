@@ -57,6 +57,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -67,6 +68,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 
 import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.loader.FlutterLoader;
@@ -361,7 +364,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
 
     static void scheduleNextRepeatingNotification(Context context, NotificationDetails notificationDetails) {
         long repeatInterval = calculateRepeatIntervalMilliseconds(notificationDetails);
-        long notificationTriggerTime = calculateNextNotificationTrigger(notificationDetails.calledAt, repeatInterval);
+        long notificationTriggerTime = calculateNextNotificationTrigger(notificationDetails.calledAt, repeatInterval, notificationDetails);
         Gson gson = buildGson();
         String notificationDetailsJson = gson.toJson(notificationDetails);
         Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
@@ -389,7 +392,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             notificationTriggerTime = calendar.getTimeInMillis();
         }
 
-        notificationTriggerTime = calculateNextNotificationTrigger(notificationTriggerTime, repeatInterval);
+        notificationTriggerTime = calculateNextNotificationTrigger(notificationTriggerTime, repeatInterval, notificationDetails);
 
         Gson gson = buildGson();
         String notificationDetailsJson = gson.toJson(notificationDetails);
@@ -408,12 +411,24 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         }
     }
 
-    private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval) {
+    private static boolean isOnValidInterval(long notificationTriggerTime, NotificationDetails notificationDetails) {
+        DateFormat formatter = new SimpleDateFormat("HH:mm");
+
+        Calendar calendarTriggerTime = Calendar.getInstance();
+        calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+        LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
+
+        if(notificationDetails.startTime == null || notificationDetails.endTime == null) return true;
+        return triggerTime.isAfter(notificationDetails.startTime) && triggerTime.isBefore(notificationDetails.endTime);
+    }
+
+    private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
         // ensures that time is in the future
         long currentTime = System.currentTimeMillis();
-        while (notificationTriggerTime < currentTime) {
+        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails)) {
             notificationTriggerTime += repeatInterval;
         }
+
         return notificationTriggerTime;
     }
 

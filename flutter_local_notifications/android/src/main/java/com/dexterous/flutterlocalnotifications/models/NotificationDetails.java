@@ -19,6 +19,8 @@ import com.dexterous.flutterlocalnotifications.models.styles.StyleInformation;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @Keep
 public class NotificationDetails {
@@ -31,6 +33,8 @@ public class NotificationDetails {
     private static final String REPEAT_INTERVAL = "repeatInterval";
     private static final String REPEAT_TIME = "repeatTime";
     private static final String REPEAT_MINUTES = "repeatMinutes";
+    private static final String START_TIME = "startTime";
+    private static final String END_TIME = "endTime";
     private static final String PLATFORM_SPECIFICS = "platformSpecifics";
     private static final String AUTO_CANCEL = "autoCancel";
     private static final String ONGOING = "ongoing";
@@ -140,6 +144,8 @@ public class NotificationDetails {
     public StyleInformation styleInformation;
     public RepeatInterval repeatInterval;
     public Integer repeatMinutes;
+    public LocalTime startTime;
+    public LocalTime endTime;
     public Time repeatTime;
     public Long millisecondsSinceEpoch;
     public Long calledAt;
@@ -211,6 +217,12 @@ public class NotificationDetails {
         }
         if (arguments.containsKey(REPEAT_MINUTES)) {
             notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
+        }
+        if (arguments.containsKey(START_TIME)) {
+            notificationDetails.startTime = LocalTime.parse((String) arguments.get(START_TIME), DateTimeFormatter.ofPattern("HH:mm"));
+        }
+        if (arguments.containsKey(END_TIME)) {
+            notificationDetails.endTime = LocalTime.parse((String) arguments.get(END_TIME), DateTimeFormatter.ofPattern("HH:mm"));
         }
         if (arguments.containsKey(REPEAT_TIME)) {
             @SuppressWarnings("unchecked")
