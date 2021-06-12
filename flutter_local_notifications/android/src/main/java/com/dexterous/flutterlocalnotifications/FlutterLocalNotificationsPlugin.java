@@ -419,8 +419,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         
         calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
         LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
-
-        return triggerTime.isAfter(startTime) && triggerTime.isBefore(endTime);
+        
+        return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
     }
 
     private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
