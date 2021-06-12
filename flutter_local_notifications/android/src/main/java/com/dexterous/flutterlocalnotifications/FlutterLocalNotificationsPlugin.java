@@ -411,24 +411,25 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         }
     }
 
-    private static boolean isOnValidInterval(long notificationTriggerTime, NotificationDetails notificationDetails) {
-        DateFormat formatter = new SimpleDateFormat("HH:mm");
-
-        Calendar calendarTriggerTime = Calendar.getInstance();
-        calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-
-        LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
-        LocalTime startTime = LocalTime.parse(notificationDetails.startTime, DateTimeFormatter.ofPattern("HH:mm"));
-        LocalTime endTime = LocalTime.parse(notificationDetails.endTime, DateTimeFormatter.ofPattern("HH:mm"));
-
+    private static boolean isOnValidInterval(long notificationTriggerTime, LocalTime startTime, LocalTime endTime) {
         if(startTime == null || endTime == null) return true;
+
+        DateFormat formatter = new SimpleDateFormat("HH:mm");
+        Calendar calendarTriggerTime = Calendar.getInstance();
+        
+        calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+        LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
+
         return triggerTime.isAfter(startTime) && triggerTime.isBefore(endTime);
     }
 
     private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
         // ensures that time is in the future
         long currentTime = System.currentTimeMillis();
-        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails)) {
+        LocalTime startTime = LocalTime.parse(notificationDetails.startTime, DateTimeFormatter.ofPattern("HH:mm"));
+        LocalTime endTime = LocalTime.parse(notificationDetails.endTime, DateTimeFormatter.ofPattern("HH:mm"));
+
+        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, startTime, endTime)) {
             notificationTriggerTime += repeatInterval;
         }
 
