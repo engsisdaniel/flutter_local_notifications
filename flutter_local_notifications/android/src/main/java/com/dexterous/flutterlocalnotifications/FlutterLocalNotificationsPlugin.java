@@ -421,7 +421,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         LocalTime startTime = LocalTime.parse(notificationDetails.startTime, DateTimeFormatter.ofPattern("HH:mm"));
         LocalTime endTime = LocalTime.parse(notificationDetails.endTime, DateTimeFormatter.ofPattern("HH:mm"));
 
-        if(notificationDetails.startTime == null || notificationDetails.endTime == null) return true;
+        if(startTime == null || endTime == null) return true;
         return triggerTime.isAfter(startTime) && triggerTime.isBefore(endTime);
     }
 

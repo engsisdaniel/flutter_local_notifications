@@ -19,8 +19,6 @@ import com.dexterous.flutterlocalnotifications.models.styles.StyleInformation;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 @Keep
 public class NotificationDetails {
