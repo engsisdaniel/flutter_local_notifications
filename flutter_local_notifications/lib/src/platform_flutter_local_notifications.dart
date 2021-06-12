@@ -234,6 +234,8 @@ class AndroidFlutterLocalNotificationsPlugin
     bool androidAllowWhileIdle = false,
     DateTime? initialDate, // Data de início para disparo do alarme
     int? repeatMinutes, // Minutos até o próximo alarme
+    String? startTime, // Horário inicial em que pode tocar o alarme: "HH:mm"
+    String? endTime, // Horário final em que pode tocar o alarme: "HH:mm"
   }) async {
     validateId(id);
     final Map<String, Object?> serializedPlatformSpecifics =
@@ -247,6 +249,8 @@ class AndroidFlutterLocalNotificationsPlugin
           DateTime.now().millisecondsSinceEpoch,
       'repeatInterval': repeatInterval.index,
       'repeatMinutes': repeatMinutes,
+      'startTime': startTime ?? '00:00',
+      'endTime': endTime ?? '23:59',
       'platformSpecifics': serializedPlatformSpecifics,
       'payload': payload ?? '',
     });
