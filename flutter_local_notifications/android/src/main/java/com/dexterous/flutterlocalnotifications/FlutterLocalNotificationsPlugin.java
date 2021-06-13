@@ -424,18 +424,17 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
             return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
         } else {
-            // org.threeten.bp.LocalTime startTime =  org.threeten.bp.LocalTime.parse(startTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-            // org.threeten.bp.LocalTime endTime =  org.threeten.bp.LocalTime.parse(endTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+            org.threeten.bp.LocalTime startTime =  org.threeten.bp.LocalTime.parse(startTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+            org.threeten.bp.LocalTime endTime =  org.threeten.bp.LocalTime.parse(endTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
 
-            // if(startTime == null || endTime == null) return true;
+            if(startTime == null || endTime == null) return true;
 
-            // // DateFormat formatter = new SimpleDateFormat("HH:mm");
-            // Calendar calendarTriggerTime = Calendar.getInstance();
-            
-            // calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-            return true;
-            // org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-            // return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
+            DateFormat formatter = new SimpleDateFormat("HH:mm");
+            Calendar calendarTriggerTime = Calendar.getInstance();            
+            calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+
+            org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+            return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
         }
     }
 
