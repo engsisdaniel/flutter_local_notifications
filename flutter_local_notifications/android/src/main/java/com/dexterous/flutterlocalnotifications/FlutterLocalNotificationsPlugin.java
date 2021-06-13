@@ -429,12 +429,13 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
 
             if(startTime == null || endTime == null) return true;
 
-            DateFormat formatter = new SimpleDateFormat("HH:mm");
+            // DateFormat formatter = new SimpleDateFormat("HH:mm");
             Calendar calendarTriggerTime = Calendar.getInstance();
             
             calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-            org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-            return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
+            return true;
+            // org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+            // return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
         }
     }
 
