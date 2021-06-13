@@ -411,14 +411,29 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         }
     }
 
-    private static boolean isOnValidInterval(long notificationTriggerTime, LocalTime startTime, LocalTime endTime) {
-        if(startTime == null || endTime == null) return true;
+    private static boolean isOnValidInterval(long notificationTriggerTime, String startTime, String endTime) {
+        if (VERSION.SDK_INT >= VERSION_CODES.O) {
+            LocalTime startTime = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"));
+            LocalTime endTime = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("HH:mm"));
+            if(startTime == null || endTime == null) return true;
 
-        DateFormat formatter = new SimpleDateFormat("HH:mm");
-        Calendar calendarTriggerTime = Calendar.getInstance();
-        
-        calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-        LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
+            DateFormat formatter = new SimpleDateFormat("HH:mm");
+            Calendar calendarTriggerTime = Calendar.getInstance();
+            
+            calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+            LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
+        } else {
+            org.threeten.bp.LocalTime startTime =  org.threeten.bp.LocalTime.parse(startTime, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+            org.threeten.bp.LocalTime endTime =  org.threeten.bp.LocalTime.parse(endTime, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+
+            if(startTime == null || endTime == null) return true;
+
+            DateFormat formatter = new SimpleDateFormat("HH:mm");
+            Calendar calendarTriggerTime = Calendar.getInstance();
+            
+            calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+            org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+        }
         
         return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
     }
@@ -426,17 +441,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
         // ensures that time is in the future
         long currentTime = System.currentTimeMillis();
-        LocalTime startTime, endTime;
-        
-        try {
-            startTime = LocalTime.parse(notificationDetails.startTime, DateTimeFormatter.ofPattern("HH:mm"));
-            endTime = LocalTime.parse(notificationDetails.endTime, DateTimeFormatter.ofPattern("HH:mm"));
-        } catch(Exception e) {
-            startTime = null;
-            endTime = null;
-        }
 
-        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, startTime, endTime)) {
+        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
             notificationTriggerTime += repeatInterval;
         }
 
