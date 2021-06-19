@@ -412,6 +412,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     private static boolean isOnValidInterval(long notificationTriggerTime, String startTimeString, String endTimeString) {
+        if(startTimeString == null || endTimeString == null) return true;
+        
         if (VERSION.SDK_INT >= VERSION_CODES.O) {
             LocalTime startTime = LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm"));
             LocalTime endTime = LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm"));
