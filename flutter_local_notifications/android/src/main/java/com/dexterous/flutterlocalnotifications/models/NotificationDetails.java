@@ -197,10 +197,10 @@ public class NotificationDetails implements Serializable {
         notificationDetails.body = (String) arguments.get(BODY);
         notificationDetails.scheduledDateTime = (String) arguments.get(SCHEDULED_DATE_TIME);
         notificationDetails.timeZoneName = (String) arguments.get(TIME_ZONE_NAME);
-        if(arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
+        if (arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
             notificationDetails.scheduledNotificationRepeatFrequency = ScheduledNotificationRepeatFrequency.values()[(Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
         }
-        if(arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
+        if (arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
             notificationDetails.matchDateTimeComponents = DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
         }
         if (arguments.containsKey(MILLISECONDS_SINCE_EPOCH)) {
@@ -229,7 +229,7 @@ public class NotificationDetails implements Serializable {
         if (arguments.containsKey(DAY)) {
             notificationDetails.day = (Integer) arguments.get(DAY);
         }
-        
+
         readPlatformSpecifics(arguments, notificationDetails);
         return notificationDetails;
     }
@@ -314,8 +314,8 @@ public class NotificationDetails implements Serializable {
     private static void readSoundInformation(NotificationDetails notificationDetails, Map<String, Object> platformChannelSpecifics) {
         notificationDetails.playSound = (Boolean) platformChannelSpecifics.get(PLAY_SOUND);
         notificationDetails.sound = (String) platformChannelSpecifics.get(SOUND);
-        Integer soundSourceIndex = (Integer)platformChannelSpecifics.get(SOUND_SOURCE);
-        if(soundSourceIndex != null) {
+        Integer soundSourceIndex = (Integer) platformChannelSpecifics.get(SOUND_SOURCE);
+        if (soundSourceIndex != null) {
             notificationDetails.soundSource = SoundSource.values()[soundSourceIndex];
         }
     }
@@ -387,7 +387,7 @@ public class NotificationDetails implements Serializable {
             return null;
         }
         Boolean bot = (Boolean) person.get(BOT);
-        String icon = (String) person.get(ICON);
+        Object icon = person.get(ICON);
         Integer iconSourceIndex = (Integer) person.get(ICON_SOURCE);
         IconSource iconSource = iconSourceIndex == null ? null : IconSource.values()[iconSourceIndex];
         Boolean important = (Boolean) person.get(IMPORTANT);
