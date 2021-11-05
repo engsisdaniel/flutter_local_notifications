@@ -28,6 +28,7 @@ public class NotificationDetails implements Serializable {
     private static final String MILLISECONDS_SINCE_EPOCH = "millisecondsSinceEpoch";
     private static final String CALLED_AT = "calledAt";
     private static final String REPEAT_INTERVAL = "repeatInterval";
+    private static final String CUSTOM_REPEAT_INTERVAL = "customRepeatInterval";
     private static final String REPEAT_TIME = "repeatTime";
     private static final String REPEAT_MINUTES = "repeatMinutes";
     private static final String START_TIME = "startTime";
@@ -140,6 +141,7 @@ public class NotificationDetails implements Serializable {
     public NotificationStyle style;
     public StyleInformation styleInformation;
     public RepeatInterval repeatInterval;
+    public String customRepeatInterval;
     public Integer repeatMinutes;
     public String startTime;
     public String endTime;
@@ -211,6 +213,9 @@ public class NotificationDetails implements Serializable {
         }
         if (arguments.containsKey(REPEAT_INTERVAL)) {
             notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
+        }
+        if (arguments.containsKey(CUSTOM_REPEAT_INTERVAL)) {
+            notificationDetails.customRepeatInterval = (String) arguments.get(CUSTOM_REPEAT_INTERVAL);
         }
         if (arguments.containsKey(REPEAT_MINUTES)) {
             notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);

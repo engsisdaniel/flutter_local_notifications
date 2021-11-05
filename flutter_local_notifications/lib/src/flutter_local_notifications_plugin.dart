@@ -380,6 +380,7 @@ class FlutterLocalNotificationsPlugin {
     String? startTime,
     String? endTime,
     int? repeatMinutes, // Minutos até o próximo alarme
+    String? customRepeatInterval,
   }) async {
     if (kIsWeb) {
       return;
@@ -397,6 +398,7 @@ class FlutterLocalNotificationsPlugin {
         androidAllowWhileIdle: androidAllowWhileIdle,
         initialDate: initialDate,
         repeatMinutes: repeatMinutes,
+        customRepeatInterval: customRepeatInterval,
         startTime: startTime,
         endTime: endTime,
       );

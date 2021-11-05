@@ -11,9 +11,6 @@ enum RepeatInterval {
 
   /// Weekly interval.
   weekly,
-
-  // Monthly interval.
-  monthly,
 }
 
 /// Details of a pending notification that has not been delivered.

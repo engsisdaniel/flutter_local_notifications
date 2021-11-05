@@ -487,8 +487,8 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
-        switch (notificationDetails.repeatInterval) {
-            case Monthly:
+        switch (notificationDetails.customRepeatInterval) {
+            case 'Monthly':
                 Calendar cal = Calendar.getInstance();
                 cal.setTimeInMillis(notificationTriggerTime);
                 cal.add(Calendar.MONTH, 1);
@@ -529,9 +529,6 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
                 break;
             case Weekly:
                 repeatInterval = 60000 * 60 * 24 * 7;
-                break;
-            case Monthly:
-                repeatInterval = 60000 * 60 * 24 * 28;
                 break;
             default:
                 break;
