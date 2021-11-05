@@ -487,21 +487,20 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     }
 
     private static long calculateNextNotificationTrigger(long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
-        switch (notificationDetails.customRepeatInterval) {
-            case "Monthly":
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(notificationTriggerTime);
-                cal.add(Calendar.MONTH, 1);
-                return cal.getTimeInMillis();
-            default:
-                break;
-        }
-
         // ensures that time is in the future
         long currentTime = System.currentTimeMillis();
+        Calendar cal = Calendar.getInstance();
 
         while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
-            notificationTriggerTime += repeatInterval;
+            switch (notificationDetails.customRepeatInterval) {
+                case "Monthly":
+                    cal.setTimeInMillis(notificationTriggerTime);
+                    cal.add(Calendar.MONTH, 1);
+                    notificationTriggerTime = cal.getTimeInMillis();
+                default:
+                    notificationTriggerTime += repeatInterval;
+                    break;
+            }
         }
 
         return notificationTriggerTime;
