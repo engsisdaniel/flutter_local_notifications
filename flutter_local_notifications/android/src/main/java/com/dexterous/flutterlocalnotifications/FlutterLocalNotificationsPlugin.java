@@ -492,7 +492,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(notificationTriggerTime);
 
-        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
+        while (notificationTriggerTime <= currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
             switch (notificationDetails.customRepeatInterval) {
                 case "Monthly":
                     cal.add(Calendar.MONTH, 1);
