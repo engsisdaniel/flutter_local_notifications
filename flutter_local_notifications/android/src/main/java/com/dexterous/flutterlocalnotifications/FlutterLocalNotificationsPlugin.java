@@ -503,7 +503,9 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             }
         }
 
-        return notificationTriggerTime;
+        if(notificationDetails.customRepeatInterval == null || notificationDetails.customRepeatInterval == "")
+            return notificationTriggerTime;
+        return notificationTriggerTime - 60000 * 1; // Remove 1 minuto para compensar delay da operação Calendar.add
     }
 
     private static long calculateRepeatIntervalMilliseconds(NotificationDetails notificationDetails) {
