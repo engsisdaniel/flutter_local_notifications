@@ -490,9 +490,13 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         // ensures that time is in the future
         long currentTime = System.currentTimeMillis();
         Calendar cal = Calendar.getInstance();
+        
+        if(notificationDetails.customRepeatInterval != null && notificationDetails.customRepeatInterval != "")
+            notificationTriggerTime = notificationTriggerTime - 60000 * 1; // Remove 1 minuto para compensar delay da operação Calendar.add
+        
         cal.setTimeInMillis(notificationTriggerTime);
 
-        while (notificationTriggerTime <= currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
+        while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
             switch (notificationDetails.customRepeatInterval) {
                 case "Monthly":
                     cal.add(Calendar.MONTH, 1);
@@ -503,9 +507,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             }
         }
 
-        if(notificationDetails.customRepeatInterval == null || notificationDetails.customRepeatInterval == "")
-            return notificationTriggerTime;
-        return notificationTriggerTime - 60000 * 1; // Remove 1 minuto para compensar delay da operação Calendar.add
+        return notificationTriggerTime;
     }
 
     private static long calculateRepeatIntervalMilliseconds(NotificationDetails notificationDetails) {
