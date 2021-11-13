@@ -493,8 +493,9 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         
         if(notificationDetails.customRepeatInterval != null) {
             switch (notificationDetails.customRepeatInterval) {
+                case "Annually":
                 case "Monthly":
-                notificationTriggerTime = notificationTriggerTime - 60000 * 1; // Remove 1 minuto para compensar delay da operação Calendar.add
+                    notificationTriggerTime = notificationTriggerTime - 60000 * 1; // Remove 1 minuto para compensar delay da operação Calendar.add
             }
         }
         
@@ -503,9 +504,14 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
         while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
             if(notificationDetails.customRepeatInterval != null) {
                 switch (notificationDetails.customRepeatInterval) {
+                    case "Annually":
+                        cal.add(Calendar.YEAR, 1);
+                        notificationTriggerTime = cal.getTimeInMillis();
+                        break;
                     case "Monthly":
                         cal.add(Calendar.MONTH, 1);
                         notificationTriggerTime = cal.getTimeInMillis();
+                        break;
                     default:
                         notificationTriggerTime += repeatInterval;
                         break;
