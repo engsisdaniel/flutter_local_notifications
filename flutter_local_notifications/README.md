@@ -28,6 +28,7 @@ A cross platform plugin for displaying local notifications.
    - [General setup](#general-setup)
    - [Handling notifications whilst the app is in the foreground](#handling-notifications-whilst-the-app-is-in-the-foreground)
 - **[❓ Usage](#-usage)**
+   - [Notification Actions](#notification-actions)
    - [Example app](#example-app)
    - [API reference](#api-reference)
 - **[Initialisation](#initialisation)**
@@ -84,6 +85,7 @@ A cross platform plugin for displaying local notifications.
 * [Android] Retrieve the list of active notifications
 * [Android] Full-screen intent notifications
 * [Android] Start a foreground service
+* [Android] Ability to check if notifications are enabled
 * [iOS (all supported versions) & macOS 10.14+] Request notification permissions and customise the permissions being requested around displaying notifications
 * [iOS 10 or newer and macOS 10.14 or newer] Display notifications with attachments
 * [Linux] Ability to to use themed/Flutter Assets icons and sound
@@ -102,7 +104,7 @@ The cross-platform facing API exposed by the `FlutterLocalNotificationsPlugin` c
 Previously, there were issues that prevented this plugin working properly with the `firebase_messaging` plugin. This meant that callbacks from each plugin might not be invoked. This has been resolved since version 6.0.13 of the `firebase_messaging` plugin so please make sure you are using more recent versions of the  `firebase_messaging` plugin and follow the steps covered in `firebase_messaging`'s readme file located [here](https://pub.dev/packages/firebase_messaging)
 
 ##### Scheduled Android notifications
-Some Android OEMs have their own customised Android OS that can prevent applications from running in the background. Consequently, scheduled notifications may not work when the application is in the background on certain devices (e.g. by Xiaomi, Huawei). If you experience problems like this then this would be the reason why. As it's a restriction imposed by the OS, this is not something that can be resolved by the plugin. Some devices may have setting that lets users control which applications run in the background. The steps for these can be vary and but is still up to the users of your application to do given it's a setting on the phone itself.
+Some Android OEMs have their own customised Android OS that can prevent applications from running in the background. Consequently, scheduled notifications may not work when the application is in the background on certain devices (e.g. by Xiaomi, Huawei). If you experience problems like this then this would be the reason why. As it's a restriction imposed by the OS, this is not something that can be resolved by the plugin. Some devices may have setting that lets users control which applications run in the background. The steps for these can vary but it is still up to the users of your application to do given it's a setting on the phone itself.
 
 It has been reported that Samsung's implementation of Android has imposed a maximum of 500 alarms that can be scheduled via the [Alarm Manager](https://developer.android.com/reference/android/app/AlarmManager) API and exceptions can occur when going over the limit.
 
@@ -273,6 +275,130 @@ void onDidReceiveLocalNotification(
 Before going on to copy-paste the code snippets in this section, double-check you have configured your application correctly.
 If you encounter any issues please refer to the API docs and the sample code in the `example` directory before opening a request on Github.
 
+### Notification Actions
+
+Notifications can now contain actions. These actions may be selected by the user when a App is sleeping or terminated and will wake up your app. However, it may not wake up the user-visible part of your App; but only the part of it which runs in the background. 
+
+This plugin contains handlers for iOS & Android to handle these cases and will allow you to specify a Dart entry point (a function).
+
+When the user selects a action, the plugin will start a **separate Flutter Engine** which only exists to execute this callback.
+
+**Configuration**:
+
+*Android* does not require any configuration.
+
+*iOS* will require a few steps:
+
+Adjust `AppDelegate.m` and set the plugin registrant callback:
+
+Add this function anywhere in AppDelegate.m:
+``` objc
+void registerPlugins(NSObject<FlutterPluginRegistry>* registry) {
+    [GeneratedPluginRegistrant registerWithRegistry:registry];
+}
+```
+
+Extend `didFinishLaunchingWithOptions` and register the callback:
+
+``` objc
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [GeneratedPluginRegistrant registerWithRegistry:self];
+
+    // Add this method    
+    [FlutterLocalNotificationsPlugin setPluginRegistrantCallback:registerPlugins];
+}
+```
+
+iOS Notification actions need to be configured before the App is started, using the `initialize` method:
+
+``` dart
+final IOSInitializationSettings initializationSettingsIOS = IOSInitializationSettings(
+    // ...
+    notificationCategories: [
+        const IOSNotificationCategory(
+            'demoCategory',
+            <IOSNotificationAction>[
+                IOSNotificationAction('id_1', 'Action 1'),
+                IOSNotificationAction(
+                'id_2',
+                'Action 2',
+                options: <IOSNotificationActionOption>{
+                    IOSNotificationActionOption.destructive,
+                },
+                ),
+                IOSNotificationAction(
+                'id_3',
+                'Action 3',
+                options: <IOSNotificationActionOption>{
+                    IOSNotificationActionOption.foreground,
+                },
+                ),
+            ],
+            options: <IOSNotificationCategoryOption>{
+                IOSNotificationCategoryOption.hiddenPreviewShowTitle,
+            },
+        )
+],
+```
+
+On iOS, the notification category will define which actions are availble. On Android, you can put the actions directly in the Notification object.
+
+**Usage**:
+
+You need to configure a **top level**, **static** method which will handle the action:
+
+``` dart
+void notificationTapBackground(String id) {
+  print('notification action tapped: $id');
+}
+```
+
+The passed `id` parameter is the same specified in `NotificationAction`. Remember this function runs in a separate isolate! You will need to use a different mechanism to communicate with the main App.
+
+Accessing plugins will work; however in particular on Android there is **no** access to the `Activity` context which means some plugins (like `url_launcher`) will require additional flags to start the main `Activity` again.
+
+Specify this function as a parameter in the `initialize` method of this plugin:
+
+``` dart
+await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onSelectNotification: (String payload) async {
+        // ...
+    },
+    backgroundHandler: notificationTapBackground,
+);
+```
+
+**Specifying Actions on notifications**:
+
+The notification actions are platform specifics and you have to specify them differently for each platform.
+
+On iOS, the actions are defined on a category, please see the configuration section for details.
+
+On Android, the actions are configured directly on the notification.
+
+``` dart
+Future<void> _showNotificationWithActions() async {
+  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+    '...',
+    '...',
+    '...',
+    actions: <AndroidNotificationAction>[
+      AndroidNotificationAction('id_1', 'Action 1'),
+      AndroidNotificationAction('id_2', 'Action 2'),
+      AndroidNotificationAction('id_3', 'Action 3'),
+    ],
+  );
+  const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+  await flutterLocalNotificationsPlugin.show(
+      0, '...', '...', platformChannelSpecifics);
+}
+```
+
+Each notification will have a internal ID & an public Action title.
+
 ### Example app
 
 The [`example`](https://github.com/MaikuB/flutter_local_notifications/tree/master/flutter_local_notifications/example) directory has a sample application that demonstrates the features of this plugin.
@@ -305,7 +431,7 @@ await flutterLocalNotificationsPlugin.initialize(initializationSettings,
     onSelectNotification: selectNotification);
 ```
 
-Initialisation can be done is in the `main` function of your application or can be done within the first page shown in your app. Developers can refer to the example app that has code for the initialising within the `main` function. The code above has been simplified for explaining the concepts. Here we have specified the default icon to use for notifications on Android (refer to the *Android setup* section) and designated the function (`selectNotification`) that should fire when a notification has been tapped on via the `onSelectNotification` callback. Specifying this callback is entirely optional but here it will trigger navigation to another page and display the payload associated with the notification.
+Initialisation can be done in the `main` function of your application or can be done within the first page shown in your app. Developers can refer to the example app that has code for the initialising within the `main` function. The code above has been simplified for explaining the concepts. Here we have specified the default icon to use for notifications on Android (refer to the *Android setup* section) and designated the function (`selectNotification`) that should fire when a notification has been tapped on via the `onSelectNotification` callback. Specifying this callback is entirely optional but here it will trigger navigation to another page and display the payload associated with the notification.
 
 ```dart
 void selectNotification(String payload) async {
@@ -419,7 +545,7 @@ Usage of the `timezone` package requires initialisation that is covered in the p
 Import the `timezone` package
 
 ```dart
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 ```
 
