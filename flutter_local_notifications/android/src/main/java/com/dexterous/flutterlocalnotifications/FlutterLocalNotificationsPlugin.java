@@ -445,16 +445,21 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  static void scheduleNextRepeatingNotification(Context context, NotificationDetails notificationDetails) {
+  static void scheduleNextRepeatingNotification(
+      Context context, NotificationDetails notificationDetails) {
     long repeatInterval = calculateRepeatIntervalMilliseconds(notificationDetails);
-    long notificationTriggerTime = calculateNextNotificationTrigger(notificationDetails.calledAt, repeatInterval, notificationDetails);
+    long notificationTriggerTime =
+        calculateNextNotificationTrigger(
+            notificationDetails.calledAt, repeatInterval, notificationDetails);
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
     Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
-    PendingIntent pendingIntent = getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
+    PendingIntent pendingIntent =
+        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
     AlarmManager alarmManager = getAlarmManager(context);
-    AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
+    AlarmManagerCompat.setExactAndAllowWhileIdle(
+        alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
     saveScheduledNotification(context, notificationDetails);
   }
 
@@ -474,7 +479,10 @@ public class FlutterLocalNotificationsPlugin
     return PendingIntent.getBroadcast(context, id, intent, flags);
   }
 
-  private static void repeatNotification(Context context, NotificationDetails notificationDetails, Boolean updateScheduledNotificationsCache) {
+  private static void repeatNotification(
+      Context context,
+      NotificationDetails notificationDetails,
+      Boolean updateScheduledNotificationsCache) {
     long repeatInterval = calculateRepeatIntervalMilliseconds(notificationDetails);
 
     long notificationTriggerTime = notificationDetails.calledAt;
@@ -491,56 +499,72 @@ public class FlutterLocalNotificationsPlugin
       notificationTriggerTime = calendar.getTimeInMillis();
     }
 
-    notificationTriggerTime = calculateNextNotificationTrigger(notificationTriggerTime, repeatInterval, notificationDetails);
+    notificationTriggerTime =
+        calculateNextNotificationTrigger(
+            notificationTriggerTime, repeatInterval, notificationDetails);
 
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
     Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
-    PendingIntent pendingIntent = getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
+    PendingIntent pendingIntent =
+        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
     AlarmManager alarmManager = getAlarmManager(context);
 
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
+      AlarmManagerCompat.setExactAndAllowWhileIdle(
+          alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
     } else {
-      alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, notificationTriggerTime, repeatInterval, pendingIntent);
+      alarmManager.setInexactRepeating(
+          AlarmManager.RTC_WAKEUP, notificationTriggerTime, repeatInterval, pendingIntent);
     }
     if (updateScheduledNotificationsCache) {
       saveScheduledNotification(context, notificationDetails);
     }
   }
 
-  private static boolean isOnValidInterval(long notificationTriggerTime, String startTimeString, String endTimeString) {
-    if(startTimeString == null || endTimeString == null) return true;
-      
+  private static boolean isOnValidInterval(
+      long notificationTriggerTime, String startTimeString, String endTimeString) {
+    if (startTimeString == null || endTimeString == null) return true;
+
     if (VERSION.SDK_INT >= VERSION_CODES.O) {
       LocalTime startTime = LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm"));
       LocalTime endTime = LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm"));
-      if(startTime == null || endTime == null) return true;
+      if (startTime == null || endTime == null) return true;
 
       DateFormat formatter = new SimpleDateFormat("HH:mm");
       Calendar calendarTriggerTime = Calendar.getInstance();
-      
+
       calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-      LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
-      
-      if(endTime.compareTo(startTime) >= 0) {
+      LocalTime triggerTime =
+          LocalTime.parse(
+              formatter.format(calendarTriggerTime.getTime()),
+              DateTimeFormatter.ofPattern("HH:mm"));
+
+      if (endTime.compareTo(startTime) >= 0) {
         return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
       }
       return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
     } else {
-      org.threeten.bp.LocalTime startTime =  org.threeten.bp.LocalTime.parse(startTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-      org.threeten.bp.LocalTime endTime =  org.threeten.bp.LocalTime.parse(endTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+      org.threeten.bp.LocalTime startTime =
+          org.threeten.bp.LocalTime.parse(
+              startTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+      org.threeten.bp.LocalTime endTime =
+          org.threeten.bp.LocalTime.parse(
+              endTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
 
-      if(startTime == null || endTime == null) return true;
+      if (startTime == null || endTime == null) return true;
 
       DateFormat formatter = new SimpleDateFormat("HH:mm");
-      Calendar calendarTriggerTime = Calendar.getInstance();            
+      Calendar calendarTriggerTime = Calendar.getInstance();
       calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
 
-      org.threeten.bp.LocalTime triggerTime = org.threeten.bp.LocalTime.parse(formatter.format(calendarTriggerTime.getTime()), org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
+      org.threeten.bp.LocalTime triggerTime =
+          org.threeten.bp.LocalTime.parse(
+              formatter.format(calendarTriggerTime.getTime()),
+              org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
 
-      if(endTime.compareTo(startTime) >= 0) {
+      if (endTime.compareTo(startTime) >= 0) {
         return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
       }
       return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
@@ -548,27 +572,29 @@ public class FlutterLocalNotificationsPlugin
   }
 
   private static long calculateNextNotificationTrigger(
-    long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
+      long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
     // ensures that time is in the future
     long currentTime = System.currentTimeMillis();
     Calendar cal = Calendar.getInstance();
-    
+
     cal.setTimeInMillis(notificationTriggerTime);
 
-    while (notificationTriggerTime < currentTime || !isOnValidInterval(notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
-      if(notificationDetails.customRepeatInterval != null) {
+    while (notificationTriggerTime < currentTime
+        || !isOnValidInterval(
+            notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
+      if (notificationDetails.customRepeatInterval != null) {
         switch (notificationDetails.customRepeatInterval) {
           case "Annually":
-              cal.add(Calendar.YEAR, 1);
-              notificationTriggerTime = cal.getTimeInMillis();
-              break;
+            cal.add(Calendar.YEAR, 1);
+            notificationTriggerTime = cal.getTimeInMillis();
+            break;
           case "Monthly":
-              cal.add(Calendar.MONTH, 1);
-              notificationTriggerTime = cal.getTimeInMillis();
-              break;
+            cal.add(Calendar.MONTH, 1);
+            notificationTriggerTime = cal.getTimeInMillis();
+            break;
           default:
-              notificationTriggerTime += repeatInterval;
-              break;
+            notificationTriggerTime += repeatInterval;
+            break;
         }
       } else {
         notificationTriggerTime += repeatInterval;
@@ -583,7 +609,7 @@ public class FlutterLocalNotificationsPlugin
 
     // Verifica se foi passado o parâmetro repeatMinutes e
     // retorna a quantidade de milissegundos
-    if(notificationDetails.repeatMinutes != null) {
+    if (notificationDetails.repeatMinutes != null) {
       repeatInterval = 60000 * notificationDetails.repeatMinutes;
       return repeatInterval;
     }

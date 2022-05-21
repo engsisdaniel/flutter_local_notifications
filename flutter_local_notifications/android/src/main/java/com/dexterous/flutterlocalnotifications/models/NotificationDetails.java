@@ -115,14 +115,14 @@ public class NotificationDetails implements Serializable {
 
   private static final String SCHEDULED_DATE_TIME = "scheduledDateTime";
   private static final String TIME_ZONE_NAME = "timeZoneName";
-  private static final String SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY = "scheduledNotificationRepeatFrequency";
+  private static final String SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY =
+      "scheduledNotificationRepeatFrequency";
   private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
 
   private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
   private static final String SHORTCUT_ID = "shortcutId";
   private static final String SUB_TEXT = "subText";
   private static final String COLORIZED = "colorized";
-
 
   public Integer id;
   public String title;
@@ -201,39 +201,43 @@ public class NotificationDetails implements Serializable {
     notificationDetails.scheduledDateTime = (String) arguments.get(SCHEDULED_DATE_TIME);
     notificationDetails.timeZoneName = (String) arguments.get(TIME_ZONE_NAME);
     if (arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
-        notificationDetails.scheduledNotificationRepeatFrequency = ScheduledNotificationRepeatFrequency.values()[(Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
+      notificationDetails.scheduledNotificationRepeatFrequency =
+          ScheduledNotificationRepeatFrequency.values()[
+              (Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
     }
     if (arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
-        notificationDetails.matchDateTimeComponents = DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
+      notificationDetails.matchDateTimeComponents =
+          DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
     }
     if (arguments.containsKey(MILLISECONDS_SINCE_EPOCH)) {
-        notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
+      notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
     }
     if (arguments.containsKey(CALLED_AT)) {
-        notificationDetails.calledAt = (Long) arguments.get(CALLED_AT);
+      notificationDetails.calledAt = (Long) arguments.get(CALLED_AT);
     }
     if (arguments.containsKey(REPEAT_INTERVAL)) {
-        notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
+      notificationDetails.repeatInterval =
+          RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
     }
     if (arguments.containsKey(CUSTOM_REPEAT_INTERVAL)) {
-        notificationDetails.customRepeatInterval = (String) arguments.get(CUSTOM_REPEAT_INTERVAL);
+      notificationDetails.customRepeatInterval = (String) arguments.get(CUSTOM_REPEAT_INTERVAL);
     }
     if (arguments.containsKey(REPEAT_MINUTES)) {
-        notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
+      notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
     }
     if (arguments.containsKey(START_TIME)) {
-        notificationDetails.startTime = (String) arguments.get(START_TIME);
+      notificationDetails.startTime = (String) arguments.get(START_TIME);
     }
     if (arguments.containsKey(END_TIME)) {
-        notificationDetails.endTime = (String) arguments.get(END_TIME);
+      notificationDetails.endTime = (String) arguments.get(END_TIME);
     }
     if (arguments.containsKey(REPEAT_TIME)) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> repeatTimeParams = (Map<String, Object>) arguments.get(REPEAT_TIME);
-        notificationDetails.repeatTime = Time.from(repeatTimeParams);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> repeatTimeParams = (Map<String, Object>) arguments.get(REPEAT_TIME);
+      notificationDetails.repeatTime = Time.from(repeatTimeParams);
     }
     if (arguments.containsKey(DAY)) {
-        notificationDetails.day = (Integer) arguments.get(DAY);
+      notificationDetails.day = (Integer) arguments.get(DAY);
     }
 
     readPlatformSpecifics(arguments, notificationDetails);
