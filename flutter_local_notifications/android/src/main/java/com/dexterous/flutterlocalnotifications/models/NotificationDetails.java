@@ -3,8 +3,9 @@ package com.dexterous.flutterlocalnotifications.models;
 import android.graphics.Color;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+
 import androidx.annotation.Keep;
-import androidx.annotation.Nullable;
+
 import com.dexterous.flutterlocalnotifications.NotificationStyle;
 import com.dexterous.flutterlocalnotifications.RepeatInterval;
 import com.dexterous.flutterlocalnotifications.models.styles.BigPictureStyleInformation;
@@ -13,251 +14,226 @@ import com.dexterous.flutterlocalnotifications.models.styles.DefaultStyleInforma
 import com.dexterous.flutterlocalnotifications.models.styles.InboxStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.MessagingStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.StyleInformation;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Keep
 public class NotificationDetails implements Serializable {
-    private static final String ID = "id";
-    private static final String TITLE = "title";
-    private static final String BODY = "body";
-    private static final String PAYLOAD = "payload";
-    private static final String MILLISECONDS_SINCE_EPOCH = "millisecondsSinceEpoch";
-    private static final String CALLED_AT = "calledAt";
-    private static final String REPEAT_INTERVAL = "repeatInterval";
-    private static final String CUSTOM_REPEAT_INTERVAL = "customRepeatInterval";
-    private static final String REPEAT_TIME = "repeatTime";
-    private static final String REPEAT_MINUTES = "repeatMinutes";
-    private static final String START_TIME = "startTime";
-    private static final String END_TIME = "endTime";
-    private static final String PLATFORM_SPECIFICS = "platformSpecifics";
-    private static final String AUTO_CANCEL = "autoCancel";
-    private static final String ONGOING = "ongoing";
-    private static final String STYLE = "style";
-    private static final String ICON = "icon";
-    private static final String PRIORITY = "priority";
-    private static final String PLAY_SOUND = "playSound";
-    private static final String SOUND = "sound";
-    private static final String SOUND_SOURCE = "soundSource";
-    private static final String ENABLE_VIBRATION = "enableVibration";
-    private static final String VIBRATION_PATTERN = "vibrationPattern";
-    private static final String TAG = "tag";
-    private static final String GROUP_KEY = "groupKey";
-    private static final String SET_AS_GROUP_SUMMARY = "setAsGroupSummary";
-    private static final String GROUP_ALERT_BEHAVIOR = "groupAlertBehavior";
-    private static final String ONLY_ALERT_ONCE = "onlyAlertOnce";
-    private static final String CHANNEL_ID = "channelId";
-    private static final String CHANNEL_NAME = "channelName";
-    private static final String CHANNEL_DESCRIPTION = "channelDescription";
-    private static final String CHANNEL_SHOW_BADGE = "channelShowBadge";
-    private static final String IMPORTANCE = "importance";
-    private static final String STYLE_INFORMATION = "styleInformation";
-    private static final String BIG_TEXT = "bigText";
-    private static final String HTML_FORMAT_BIG_TEXT = "htmlFormatBigText";
-    private static final String CONTENT_TITLE = "contentTitle";
-    private static final String HTML_FORMAT_CONTENT_TITLE = "htmlFormatContentTitle";
-    private static final String SUMMARY_TEXT = "summaryText";
-    private static final String HTML_FORMAT_SUMMARY_TEXT = "htmlFormatSummaryText";
-    private static final String LINES = "lines";
-    private static final String HTML_FORMAT_LINES = "htmlFormatLines";
-    private static final String HTML_FORMAT_TITLE = "htmlFormatTitle";
-    private static final String HTML_FORMAT_CONTENT = "htmlFormatContent";
-    private static final String DAY = "day";
-    private static final String COLOR_ALPHA = "colorAlpha";
-    private static final String COLOR_RED = "colorRed";
-    private static final String COLOR_GREEN = "colorGreen";
-    private static final String COLOR_BLUE = "colorBlue";
-    private static final String LARGE_ICON = "largeIcon";
-    private static final String LARGE_ICON_BITMAP_SOURCE = "largeIconBitmapSource";
-    private static final String BIG_PICTURE = "bigPicture";
-    private static final String BIG_PICTURE_BITMAP_SOURCE = "bigPictureBitmapSource";
-    private static final String HIDE_EXPANDED_LARGE_ICON = "hideExpandedLargeIcon";
-    private static final String SHOW_PROGRESS = "showProgress";
-    private static final String MAX_PROGRESS = "maxProgress";
-    private static final String PROGRESS = "progress";
-    private static final String INDETERMINATE = "indeterminate";
-    private static final String PERSON = "person";
-    private static final String CONVERSATION_TITLE = "conversationTitle";
-    private static final String GROUP_CONVERSATION = "groupConversation";
-    private static final String MESSAGES = "messages";
-    private static final String TEXT = "text";
-    private static final String TIMESTAMP = "timestamp";
-    private static final String BOT = "bot";
-    private static final String ICON_SOURCE = "iconSource";
-    private static final String IMPORTANT = "important";
-    private static final String KEY = "key";
-    private static final String NAME = "name";
-    private static final String URI = "uri";
-    private static final String DATA_MIME_TYPE = "dataMimeType";
-    private static final String DATA_URI = "dataUri";
-    private static final String CHANNEL_ACTION = "channelAction";
-    private static final String ENABLE_LIGHTS = "enableLights";
-    private static final String LED_COLOR_ALPHA = "ledColorAlpha";
-    private static final String LED_COLOR_RED = "ledColorRed";
-    private static final String LED_COLOR_GREEN = "ledColorGreen";
-    private static final String LED_COLOR_BLUE = "ledColorBlue";
+  private static final String ID = "id";
+  private static final String TITLE = "title";
+  private static final String BODY = "body";
+  private static final String PAYLOAD = "payload";
+  private static final String MILLISECONDS_SINCE_EPOCH = "millisecondsSinceEpoch";
+  private static final String CALLED_AT = "calledAt";
+  private static final String REPEAT_INTERVAL = "repeatInterval";
+  private static final String CUSTOM_REPEAT_INTERVAL = "customRepeatInterval";
+  private static final String REPEAT_TIME = "repeatTime";
+  private static final String REPEAT_MINUTES = "repeatMinutes";
+  private static final String START_TIME = "startTime";
+  private static final String END_TIME = "endTime";
+  private static final String PLATFORM_SPECIFICS = "platformSpecifics";
+  private static final String AUTO_CANCEL = "autoCancel";
+  private static final String ONGOING = "ongoing";
+  private static final String STYLE = "style";
+  private static final String ICON = "icon";
+  private static final String PRIORITY = "priority";
+  private static final String PLAY_SOUND = "playSound";
+  private static final String SOUND = "sound";
+  private static final String SOUND_SOURCE = "soundSource";
+  private static final String ENABLE_VIBRATION = "enableVibration";
+  private static final String VIBRATION_PATTERN = "vibrationPattern";
+  private static final String TAG = "tag";
+  private static final String GROUP_KEY = "groupKey";
+  private static final String SET_AS_GROUP_SUMMARY = "setAsGroupSummary";
+  private static final String GROUP_ALERT_BEHAVIOR = "groupAlertBehavior";
+  private static final String ONLY_ALERT_ONCE = "onlyAlertOnce";
+  private static final String CHANNEL_ID = "channelId";
+  private static final String CHANNEL_NAME = "channelName";
+  private static final String CHANNEL_DESCRIPTION = "channelDescription";
+  private static final String CHANNEL_SHOW_BADGE = "channelShowBadge";
+  private static final String IMPORTANCE = "importance";
+  private static final String STYLE_INFORMATION = "styleInformation";
+  private static final String BIG_TEXT = "bigText";
+  private static final String HTML_FORMAT_BIG_TEXT = "htmlFormatBigText";
+  private static final String CONTENT_TITLE = "contentTitle";
+  private static final String HTML_FORMAT_CONTENT_TITLE = "htmlFormatContentTitle";
+  private static final String SUMMARY_TEXT = "summaryText";
+  private static final String HTML_FORMAT_SUMMARY_TEXT = "htmlFormatSummaryText";
+  private static final String LINES = "lines";
+  private static final String HTML_FORMAT_LINES = "htmlFormatLines";
+  private static final String HTML_FORMAT_TITLE = "htmlFormatTitle";
+  private static final String HTML_FORMAT_CONTENT = "htmlFormatContent";
+  private static final String DAY = "day";
+  private static final String COLOR_ALPHA = "colorAlpha";
+  private static final String COLOR_RED = "colorRed";
+  private static final String COLOR_GREEN = "colorGreen";
+  private static final String COLOR_BLUE = "colorBlue";
+  private static final String LARGE_ICON = "largeIcon";
+  private static final String LARGE_ICON_BITMAP_SOURCE = "largeIconBitmapSource";
+  private static final String BIG_PICTURE = "bigPicture";
+  private static final String BIG_PICTURE_BITMAP_SOURCE = "bigPictureBitmapSource";
+  private static final String HIDE_EXPANDED_LARGE_ICON = "hideExpandedLargeIcon";
+  private static final String SHOW_PROGRESS = "showProgress";
+  private static final String MAX_PROGRESS = "maxProgress";
+  private static final String PROGRESS = "progress";
+  private static final String INDETERMINATE = "indeterminate";
+  private static final String PERSON = "person";
+  private static final String CONVERSATION_TITLE = "conversationTitle";
+  private static final String GROUP_CONVERSATION = "groupConversation";
+  private static final String MESSAGES = "messages";
+  private static final String TEXT = "text";
+  private static final String TIMESTAMP = "timestamp";
+  private static final String BOT = "bot";
+  private static final String ICON_SOURCE = "iconSource";
+  private static final String IMPORTANT = "important";
+  private static final String KEY = "key";
+  private static final String NAME = "name";
+  private static final String URI = "uri";
+  private static final String DATA_MIME_TYPE = "dataMimeType";
+  private static final String DATA_URI = "dataUri";
+  private static final String CHANNEL_ACTION = "channelAction";
+  private static final String ENABLE_LIGHTS = "enableLights";
+  private static final String LED_COLOR_ALPHA = "ledColorAlpha";
+  private static final String LED_COLOR_RED = "ledColorRed";
+  private static final String LED_COLOR_GREEN = "ledColorGreen";
+  private static final String LED_COLOR_BLUE = "ledColorBlue";
 
-    private static final String LED_ON_MS = "ledOnMs";
-    private static final String LED_OFF_MS = "ledOffMs";
-    private static final String VISIBILITY = "visibility";
+  private static final String LED_ON_MS = "ledOnMs";
+  private static final String LED_OFF_MS = "ledOffMs";
+  private static final String VISIBILITY = "visibility";
 
-    private static final String TICKER = "ticker";
-    private static final String ALLOW_WHILE_IDLE = "allowWhileIdle";
-    private static final String CATEGORY = "category";
-    private static final String TIMEOUT_AFTER = "timeoutAfter";
-    private static final String SHOW_WHEN = "showWhen";
-    private static final String WHEN = "when";
-    private static final String USES_CHRONOMETER = "usesChronometer";
-    private static final String ADDITIONAL_FLAGS = "additionalFlags";
+  private static final String TICKER = "ticker";
+  private static final String ALLOW_WHILE_IDLE = "allowWhileIdle";
+  private static final String CATEGORY = "category";
+  private static final String TIMEOUT_AFTER = "timeoutAfter";
+  private static final String SHOW_WHEN = "showWhen";
+  private static final String WHEN = "when";
+  private static final String USES_CHRONOMETER = "usesChronometer";
+  private static final String ADDITIONAL_FLAGS = "additionalFlags";
 
-    private static final String SCHEDULED_DATE_TIME = "scheduledDateTime";
-    private static final String TIME_ZONE_NAME = "timeZoneName";
-    private static final String SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY = "scheduledNotificationRepeatFrequency";
-    private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
+  private static final String SCHEDULED_DATE_TIME = "scheduledDateTime";
+  private static final String TIME_ZONE_NAME = "timeZoneName";
+  private static final String SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY = "scheduledNotificationRepeatFrequency";
+  private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
 
-    private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
-    private static final String SHORTCUT_ID = "shortcutId";
-    private static final String SUB_TEXT = "subText";
-
-
-    public Integer id;
-    public String title;
-    public String body;
-    public String icon;
-    public String channelId = "Default_Channel_Id";
-    public String channelName;
-    public String channelDescription;
-    public Boolean channelShowBadge;
-    public Integer importance;
-    public Integer priority;
-    public Boolean playSound;
-    public String sound;
-    public SoundSource soundSource;
-    public Boolean enableVibration;
-    public long[] vibrationPattern;
-    public NotificationStyle style;
-    public StyleInformation styleInformation;
-    public RepeatInterval repeatInterval;
-    public String customRepeatInterval;
-    public Integer repeatMinutes;
-    public String startTime;
-    public String endTime;
-    public Time repeatTime;
-    public Long millisecondsSinceEpoch;
-    public Long calledAt;
-    public String payload;
-    public String groupKey;
-    public Boolean setAsGroupSummary;
-    public Integer groupAlertBehavior;
-    public Boolean autoCancel;
-    public Boolean ongoing;
-    public Integer day;
-    public Integer color;
-    public Object largeIcon;
-    public BitmapSource largeIconBitmapSource;
-    public Boolean onlyAlertOnce;
-    public Boolean showProgress;
-    public Integer maxProgress;
-    public Integer progress;
-    public Boolean indeterminate;
-    public NotificationChannelAction channelAction;
-    public Boolean enableLights;
-    public Integer ledColor;
-    public Integer ledOnMs;
-    public Integer ledOffMs;
-    public String ticker;
-    public Integer visibility;
-    public Boolean allowWhileIdle;
-    public Long timeoutAfter;
-    public String category;
-    public int[] additionalFlags;
-    public Boolean showWhen;
-    public Boolean usesChronometer;
-    public String scheduledDateTime;
-    public String timeZoneName;
-    public ScheduledNotificationRepeatFrequency scheduledNotificationRepeatFrequency;
-    public DateTimeComponents matchDateTimeComponents;
-    public Long when;
-    public Boolean fullScreenIntent;
-    public String shortcutId;
-    public String subText;
-    public String tag;
+  private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
+  private static final String SHORTCUT_ID = "shortcutId";
+  private static final String SUB_TEXT = "subText";
+  private static final String COLORIZED = "colorized";
 
 
+  public Integer id;
+  public String title;
+  public String body;
+  public String icon;
+  public String channelId = "Default_Channel_Id";
+  public String channelName;
+  public String channelDescription;
+  public Boolean channelShowBadge;
+  public Integer importance;
+  public Integer priority;
+  public Boolean playSound;
+  public String sound;
+  public SoundSource soundSource;
+  public Boolean enableVibration;
+  public long[] vibrationPattern;
+  public NotificationStyle style;
+  public StyleInformation styleInformation;
+  public RepeatInterval repeatInterval;
+  public String customRepeatInterval;
+  public Integer repeatMinutes;
+  public String startTime;
+  public String endTime;
+  public Time repeatTime;
+  public Long millisecondsSinceEpoch;
+  public Long calledAt;
+  public String payload;
+  public String groupKey;
+  public Boolean setAsGroupSummary;
+  public Integer groupAlertBehavior;
+  public Boolean autoCancel;
+  public Boolean ongoing;
+  public Integer day;
+  public Integer color;
+  public Object largeIcon;
+  public BitmapSource largeIconBitmapSource;
+  public Boolean onlyAlertOnce;
+  public Boolean showProgress;
+  public Integer maxProgress;
+  public Integer progress;
+  public Boolean indeterminate;
+  public NotificationChannelAction channelAction;
+  public Boolean enableLights;
+  public Integer ledColor;
+  public Integer ledOnMs;
+  public Integer ledOffMs;
+  public String ticker;
+  public Integer visibility;
+  public Boolean allowWhileIdle;
+  public Long timeoutAfter;
+  public String category;
+  public int[] additionalFlags;
+  public Boolean showWhen;
+  public Boolean usesChronometer;
+  public String scheduledDateTime;
+  public String timeZoneName;
+  public ScheduledNotificationRepeatFrequency scheduledNotificationRepeatFrequency;
+  public DateTimeComponents matchDateTimeComponents;
+  public Long when;
+  public Boolean fullScreenIntent;
+  public String shortcutId;
+  public String subText;
+  public String tag;
+  public Boolean colorized;
 
-    // Note: this is set on the Android to save details about the icon that should be used when re-hydrating scheduled notifications when a device has been restarted.
-    public Integer iconResourceId;
+  // Note: this is set on the Android to save details about the icon that should be used when
+  // re-hydrating scheduled notifications when a device has been restarted.
+  public Integer iconResourceId;
 
-    public static NotificationDetails from(Map<String, Object> arguments) {
-        NotificationDetails notificationDetails = new NotificationDetails();
-        notificationDetails.payload = (String) arguments.get(PAYLOAD);
-        notificationDetails.id = (Integer) arguments.get(ID);
-        notificationDetails.title = (String) arguments.get(TITLE);
-        notificationDetails.body = (String) arguments.get(BODY);
-        notificationDetails.scheduledDateTime = (String) arguments.get(SCHEDULED_DATE_TIME);
-        notificationDetails.timeZoneName = (String) arguments.get(TIME_ZONE_NAME);
-        if (arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
-            notificationDetails.scheduledNotificationRepeatFrequency = ScheduledNotificationRepeatFrequency.values()[(Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
-        }
-        if (arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
-            notificationDetails.matchDateTimeComponents = DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
-        }
-        if (arguments.containsKey(MILLISECONDS_SINCE_EPOCH)) {
-            notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
-        }
-        if (arguments.containsKey(CALLED_AT)) {
-            notificationDetails.calledAt = (Long) arguments.get(CALLED_AT);
-        }
-        if (arguments.containsKey(REPEAT_INTERVAL)) {
-            notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
-        }
-        if (arguments.containsKey(CUSTOM_REPEAT_INTERVAL)) {
-            notificationDetails.customRepeatInterval = (String) arguments.get(CUSTOM_REPEAT_INTERVAL);
-        }
-        if (arguments.containsKey(REPEAT_MINUTES)) {
-            notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
-        }
-        if (arguments.containsKey(START_TIME)) {
-            notificationDetails.startTime = (String) arguments.get(START_TIME);
-        }
-        if (arguments.containsKey(END_TIME)) {
-            notificationDetails.endTime = (String) arguments.get(END_TIME);
-        }
-        if (arguments.containsKey(REPEAT_TIME)) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> repeatTimeParams = (Map<String, Object>) arguments.get(REPEAT_TIME);
-            notificationDetails.repeatTime = Time.from(repeatTimeParams);
-        }
-        if (arguments.containsKey(DAY)) {
-            notificationDetails.day = (Integer) arguments.get(DAY);
-        }
-
-        readPlatformSpecifics(arguments, notificationDetails);
-        return notificationDetails;
+  public static NotificationDetails from(Map<String, Object> arguments) {
+    NotificationDetails notificationDetails = new NotificationDetails();
+    notificationDetails.payload = (String) arguments.get(PAYLOAD);
+    notificationDetails.id = (Integer) arguments.get(ID);
+    notificationDetails.title = (String) arguments.get(TITLE);
+    notificationDetails.body = (String) arguments.get(BODY);
+    notificationDetails.scheduledDateTime = (String) arguments.get(SCHEDULED_DATE_TIME);
+    notificationDetails.timeZoneName = (String) arguments.get(TIME_ZONE_NAME);
+    if (arguments.containsKey(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)) {
+        notificationDetails.scheduledNotificationRepeatFrequency = ScheduledNotificationRepeatFrequency.values()[(Integer) arguments.get(SCHEDULED_NOTIFICATION_REPEAT_FREQUENCY)];
     }
     if (arguments.containsKey(MATCH_DATE_TIME_COMPONENTS)) {
-      notificationDetails.matchDateTimeComponents =
-          DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
+        notificationDetails.matchDateTimeComponents = DateTimeComponents.values()[(Integer) arguments.get(MATCH_DATE_TIME_COMPONENTS)];
     }
     if (arguments.containsKey(MILLISECONDS_SINCE_EPOCH)) {
-      notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
+        notificationDetails.millisecondsSinceEpoch = (Long) arguments.get(MILLISECONDS_SINCE_EPOCH);
     }
     if (arguments.containsKey(CALLED_AT)) {
-      notificationDetails.calledAt = (Long) arguments.get(CALLED_AT);
+        notificationDetails.calledAt = (Long) arguments.get(CALLED_AT);
     }
     if (arguments.containsKey(REPEAT_INTERVAL)) {
-      notificationDetails.repeatInterval =
-          RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
+        notificationDetails.repeatInterval = RepeatInterval.values()[(Integer) arguments.get(REPEAT_INTERVAL)];
+    }
+    if (arguments.containsKey(CUSTOM_REPEAT_INTERVAL)) {
+        notificationDetails.customRepeatInterval = (String) arguments.get(CUSTOM_REPEAT_INTERVAL);
+    }
+    if (arguments.containsKey(REPEAT_MINUTES)) {
+        notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
+    }
+    if (arguments.containsKey(START_TIME)) {
+        notificationDetails.startTime = (String) arguments.get(START_TIME);
+    }
+    if (arguments.containsKey(END_TIME)) {
+        notificationDetails.endTime = (String) arguments.get(END_TIME);
     }
     if (arguments.containsKey(REPEAT_TIME)) {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> repeatTimeParams = (Map<String, Object>) arguments.get(REPEAT_TIME);
-      notificationDetails.repeatTime = Time.from(repeatTimeParams);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> repeatTimeParams = (Map<String, Object>) arguments.get(REPEAT_TIME);
+        notificationDetails.repeatTime = Time.from(repeatTimeParams);
     }
     if (arguments.containsKey(DAY)) {
-      notificationDetails.day = (Integer) arguments.get(DAY);
+        notificationDetails.day = (Integer) arguments.get(DAY);
     }
 
     readPlatformSpecifics(arguments, notificationDetails);
@@ -304,19 +280,7 @@ public class NotificationDetails implements Serializable {
       notificationDetails.additionalFlags = (int[]) platformChannelSpecifics.get(ADDITIONAL_FLAGS);
       notificationDetails.subText = (String) platformChannelSpecifics.get(SUB_TEXT);
       notificationDetails.tag = (String) platformChannelSpecifics.get(TAG);
-
-      if (platformChannelSpecifics.containsKey(ACTIONS)) {
-        List<Map<String, Object>> inputActions =
-            (List<Map<String, Object>>) platformChannelSpecifics.get(ACTIONS);
-        if (!inputActions.isEmpty()) {
-          notificationDetails.actions = new ArrayList<>();
-
-          for (Map<String, Object> input : inputActions) {
-            final NotificationAction action = new NotificationAction(input);
-            notificationDetails.actions.add(action);
-          }
-        }
-      }
+      notificationDetails.colorized = (Boolean) platformChannelSpecifics.get(COLORIZED);
     }
   }
 
