@@ -650,48 +650,24 @@ public class FlutterLocalNotificationsPlugin
       long notificationTriggerTime, String startTimeString, String endTimeString) {
     if (startTimeString == null || endTimeString == null) return true;
 
-    if (VERSION.SDK_INT >= VERSION_CODES.O) {
-      LocalTime startTime = LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm"));
-      LocalTime endTime = LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm"));
-      if (startTime == null || endTime == null) return true;
+    LocalTime startTime = LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm"));
+    LocalTime endTime = LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm"));
+    if (startTime == null || endTime == null) return true;
 
-      DateFormat formatter = new SimpleDateFormat("HH:mm");
-      Calendar calendarTriggerTime = Calendar.getInstance();
+    DateFormat formatter = new SimpleDateFormat("HH:mm");
+    Calendar calendarTriggerTime = Calendar.getInstance();
 
-      calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-      LocalTime triggerTime =
-          LocalTime.parse(
-              formatter.format(calendarTriggerTime.getTime()),
-              DateTimeFormatter.ofPattern("HH:mm"));
+    calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+    LocalTime triggerTime =
+        LocalTime.parse(
+            formatter.format(calendarTriggerTime.getTime()),
+            DateTimeFormatter.ofPattern("HH:mm"));
 
-      if (endTime.compareTo(startTime) >= 0) {
-        return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
-      }
-      return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
-    } else {
-      org.threeten.bp.LocalTime startTime =
-          org.threeten.bp.LocalTime.parse(
-              startTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-      org.threeten.bp.LocalTime endTime =
-          org.threeten.bp.LocalTime.parse(
-              endTimeString, org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-
-      if (startTime == null || endTime == null) return true;
-
-      DateFormat formatter = new SimpleDateFormat("HH:mm");
-      Calendar calendarTriggerTime = Calendar.getInstance();
-      calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-
-      org.threeten.bp.LocalTime triggerTime =
-          org.threeten.bp.LocalTime.parse(
-              formatter.format(calendarTriggerTime.getTime()),
-              org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm"));
-
-      if (endTime.compareTo(startTime) >= 0) {
-        return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
-      }
-      return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
+    if (endTime.compareTo(startTime) >= 0) {
+      return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
     }
+
+    return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
   }
 
   private static long calculateNextNotificationTrigger(
