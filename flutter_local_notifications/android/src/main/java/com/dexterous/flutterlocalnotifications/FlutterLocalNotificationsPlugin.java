@@ -722,7 +722,7 @@ public class FlutterLocalNotificationsPlugin
 
     return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
   }
-  
+
   private static void setupAlarm(
       NotificationDetails notificationDetails,
       AlarmManager alarmManager,
