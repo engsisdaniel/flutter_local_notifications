@@ -18,12 +18,13 @@ import 'platform_specifics/android/notification_channel_group.dart';
 import 'platform_specifics/android/notification_details.dart';
 import 'platform_specifics/android/notification_sound.dart';
 import 'platform_specifics/android/person.dart';
+import 'platform_specifics/android/schedule_mode.dart';
 import 'platform_specifics/android/styles/messaging_style_information.dart';
 import 'platform_specifics/darwin/initialization_settings.dart';
 import 'platform_specifics/darwin/mappers.dart';
 import 'platform_specifics/darwin/notification_details.dart';
+import 'platform_specifics/darwin/notification_enabled_options.dart';
 import 'platform_specifics/ios/enums.dart';
-import 'type_mappers.dart';
 import 'typedefs.dart';
 import 'types.dart';
 import 'tz_datetime_mapper.dart';
@@ -83,16 +84,6 @@ class MethodChannelFlutterLocalNotificationsPlugin
         <PendingNotificationRequest>[];
   }
 
-  /// Returns the list of active notifications shown by the application that
-  /// haven't been dismissed/removed.
-  ///
-  /// The supported OS versions are
-  /// - Android: Android 6.0 or newer
-  /// - iOS: iOS 10.0 or newer
-  /// - macOS: macOS 10.14 or newer
-  ///
-  /// Throws a [PlatformException] with an `unsupported_os_version` error code
-  /// on older OS versions. On Linux it will throw an [UnimplementedError].
   @override
   Future<List<ActiveNotification>> getActiveNotifications() async {
     final List<Map<dynamic, dynamic>>? activeNotifications =
@@ -151,6 +142,18 @@ class AndroidFlutterLocalNotificationsPlugin
     return await _channel.invokeMethod('initialize', arguments);
   }
 
+  /// Requests the permission to schedule exact alarms.
+  ///
+  /// Returns whether the permission was granted.
+  ///
+  /// Use this when your application requires the [`SCHEDULE_EXACT_ALARM`](https://developer.android.com/reference/android/Manifest.permission#SCHEDULE_EXACT_ALARM)
+  /// permission and targets Android 13 or higher. The reason for this is that
+  /// applications meeting this criteria that run on Android 14 or higher will
+  /// require the user to grant permission. See [here](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)
+  /// for official Android documentation.
+  Future<bool?> requestExactAlarmsPermission() async =>
+      _channel.invokeMethod<bool>('requestExactAlarmsPermission');
+
   /// Requests the permission for sending notifications. Returns whether the
   /// permission was granted.
   ///
@@ -160,123 +163,45 @@ class AndroidFlutterLocalNotificationsPlugin
   /// See also:
   ///
   ///  * https://developer.android.com/about/versions/13/changes/notification-permission
-  Future<bool?> requestPermission() async =>
-      _channel.invokeMethod<bool>('requestPermission');
-
-  /// Schedules a notification to be shown at the specified date and time.
-  ///
-  /// The [androidAllowWhileIdle] parameter determines if the notification
-  /// should still be shown at the exact time when the device is in a low-power
-  /// idle mode.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> schedule(
-    int id,
-    String? title,
-    String? body,
-    DateTime scheduledDate,
-    AndroidNotificationDetails? notificationDetails, {
-    String? payload,
-    bool androidAllowWhileIdle = false,
-  }) async {
-    validateId(id);
-    final Map<String, Object?> serializedPlatformSpecifics =
-        notificationDetails?.toMap() ?? <String, Object>{};
-    serializedPlatformSpecifics['allowWhileIdle'] = androidAllowWhileIdle;
-    await _channel.invokeMethod('schedule', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'millisecondsSinceEpoch': scheduledDate.millisecondsSinceEpoch,
-      'platformSpecifics': serializedPlatformSpecifics,
-      'payload': payload ?? ''
-    });
-  }
+  Future<bool?> requestNotificationsPermission() async =>
+      _channel.invokeMethod<bool>('requestNotificationsPermission');
 
   /// Schedules a notification to be shown at the specified date and time
   /// relative to a specific time zone.
+  ///
+  /// The [scheduleMode] parameter defines the precision of the timing for the
+  /// notification to be appear.
+  ///
+  /// This will also require additional setup for the app, especially in the
+  /// app's `AndroidManifest.xml` file. Please see check the readme for further
+  /// details.
   Future<void> zonedSchedule(
     int id,
     String? title,
     String? body,
     TZDateTime scheduledDate,
     AndroidNotificationDetails? notificationDetails, {
-    required bool androidAllowWhileIdle,
+    required AndroidScheduleMode scheduleMode,
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
     validateId(id);
     validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
-    ArgumentError.checkNotNull(androidAllowWhileIdle, 'androidAllowWhileIdle');
-    final Map<String, Object?> serializedPlatformSpecifics =
-        notificationDetails?.toMap() ?? <String, Object>{};
-    serializedPlatformSpecifics['allowWhileIdle'] = androidAllowWhileIdle;
+
     await _channel.invokeMethod(
-        'zonedSchedule',
-        <String, Object?>{
-          'id': id,
-          'title': title,
-          'body': body,
-          'platformSpecifics': serializedPlatformSpecifics,
-          'payload': payload ?? ''
-        }
-          ..addAll(scheduledDate.toMap())
-          ..addAll(matchDateTimeComponents == null
-              ? <String, Object>{}
-              : <String, Object>{
-                  'matchDateTimeComponents': matchDateTimeComponents.index
-                }));
-  }
-
-  /// Shows a notification on a daily interval at the specified time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showDailyAtTime(
-    int id,
-    String? title,
-    String? body,
-    Time notificationTime,
-    AndroidNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('showDailyAtTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.daily.index,
-      'repeatTime': notificationTime.toMap(),
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
-  }
-
-  /// Shows a notification on weekly interval at the specified day and time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showWeeklyAtDayAndTime(
-    int id,
-    String? title,
-    String? body,
-    Day day,
-    Time notificationTime,
-    AndroidNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-
-    await _channel.invokeMethod('showWeeklyAtDayAndTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.weekly.index,
-      'repeatTime': notificationTime.toMap(),
-      'day': day.value,
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
+      'zonedSchedule',
+      <String, Object?>{
+        'id': id,
+        'title': title,
+        'body': body,
+        'platformSpecifics':
+            _buildPlatformSpecifics(notificationDetails, scheduleMode),
+        'payload': payload ?? '',
+        ...scheduledDate.toMap(),
+        if (matchDateTimeComponents != null)
+          'matchDateTimeComponents': matchDateTimeComponents.index
+      },
+    );
   }
 
   /// Starts an Android foreground service with the given notification.
@@ -350,7 +275,7 @@ class AndroidFlutterLocalNotificationsPlugin
         'payload': payload ?? '',
         'platformSpecifics': notificationDetails?.toMap(),
       },
-      'startType': startType.value,
+      'startType': startType.index,
       'foregroundServiceTypes': foregroundServiceTypes
           ?.map((AndroidServiceForegroundType type) => type.value)
           .toList()
@@ -389,6 +314,15 @@ class AndroidFlutterLocalNotificationsPlugin
     );
   }
 
+  /// Periodically show a notification using the specified interval.
+  ///
+  /// For example, specifying a hourly interval means the first time the
+  /// notification will be an hour after the method has been called and
+  /// then every hour after that.
+  ///
+  /// This will also require additional setup for the app, especially in the
+  /// app's `AndroidManifest.xml` file. Please see check the readme for further
+  /// details.
   @override
   Future<void> periodicallyShow(
     int id,
@@ -397,17 +331,14 @@ class AndroidFlutterLocalNotificationsPlugin
     RepeatInterval repeatInterval, {
     AndroidNotificationDetails? notificationDetails,
     String? payload,
-    bool androidAllowWhileIdle = false,
     DateTime? initialDate, // Data de início para disparo do alarme
     int? repeatMinutes, // Minutos até o próximo alarme
     String? customRepeatInterval,
     String? startTime, // Horário inicial em que pode tocar o alarme: "HH:mm"
     String? endTime, // Horário final em que pode tocar o alarme: "HH:mm"
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
   }) async {
     validateId(id);
-    final Map<String, Object?> serializedPlatformSpecifics =
-        notificationDetails?.toMap() ?? <String, Object>{};
-    serializedPlatformSpecifics['allowWhileIdle'] = androidAllowWhileIdle;
     await _channel.invokeMethod('periodicallyShow', <String, Object?>{
       'id': id,
       'title': title,
@@ -419,10 +350,20 @@ class AndroidFlutterLocalNotificationsPlugin
       'customRepeatInterval': customRepeatInterval,
       'startTime': startTime ?? '00:00',
       'endTime': endTime ?? '23:59',
-      'platformSpecifics': serializedPlatformSpecifics,
+      'platformSpecifics':
+          _buildPlatformSpecifics(notificationDetails, scheduleMode),
       'payload': payload ?? '',
     });
   }
+
+  Map<String, Object?> _buildPlatformSpecifics(
+    AndroidNotificationDetails? notificationDetails,
+    AndroidScheduleMode scheduleMode,
+  ) =>
+      <String, Object?>{
+        if (notificationDetails != null) ...notificationDetails.toMap(),
+        'scheduleMode': scheduleMode.name,
+      };
 
   /// Cancel/remove the notification with the specified id.
   ///
@@ -553,7 +494,9 @@ class AndroidFlutterLocalNotificationsPlugin
               description: a['description'],
               groupId: a['groupId'],
               showBadge: a['showBadge'],
-              importance: Importance(a['importance']),
+              importance: Importance.values
+                  // ignore: always_specify_types
+                  .firstWhere((i) => i.value == a['importance']),
               playSound: a['playSound'],
               sound: _getNotificationChannelSound(a),
               enableLights: a['enableLights'],
@@ -575,6 +518,10 @@ class AndroidFlutterLocalNotificationsPlugin
   ///  * https://developer.android.com/about/versions/13/changes/notification-permission
   Future<bool?> areNotificationsEnabled() async =>
       await _channel.invokeMethod<bool>('areNotificationsEnabled');
+
+  /// Returns whether the app can schedule exact notifications.
+  Future<bool?> canScheduleExactNotifications() async =>
+      await _channel.invokeMethod<bool>('canScheduleExactNotifications');
 
   AndroidNotificationSound? _getNotificationChannelSound(
       Map<dynamic, dynamic> channelMap) {
@@ -624,10 +571,12 @@ class IOSFlutterLocalNotificationsPlugin
   /// Initialisation may also request notification permissions where users will
   /// see a permissions prompt. This may be fine in cases where it's acceptable
   /// to do this when the application runs for the first time. However, if your
-  /// applicationn needs to do this at a later point in time, set the
+  /// application needs to do this at a later point in time, set the
   /// [DarwinInitializationSettings.requestAlertPermission],
   /// [DarwinInitializationSettings.requestBadgePermission] and
-  /// [DarwinInitializationSettings.requestSoundPermission] values to false.
+  /// [DarwinInitializationSettings.requestSoundPermission] and
+  /// [DarwinInitializationSettings.requestProvisionalPermission] values to
+  /// false.
   /// [requestPermissions] can then be called to request permissions when
   /// needed.
   ///
@@ -667,37 +616,37 @@ class IOSFlutterLocalNotificationsPlugin
     bool sound = false,
     bool alert = false,
     bool badge = false,
+    bool provisional = false,
     bool critical = false,
   }) =>
       _channel.invokeMethod<bool?>('requestPermissions', <String, bool>{
         'sound': sound,
         'alert': alert,
         'badge': badge,
+        'provisional': provisional,
         'critical': critical,
       });
 
-  /// Schedules a notification to be shown at the specified date and time with
-  /// an optional payload that is passed through when a notification is tapped.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> schedule(
-    int id,
-    String? title,
-    String? body,
-    DateTime scheduledDate,
-    DarwinNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('schedule', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'millisecondsSinceEpoch': scheduledDate.millisecondsSinceEpoch,
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
-  }
+  /// Returns whether the app can post notifications and what kind of.
+  ///
+  /// See [NotificationsEnabledOptions] for more info.
+  Future<NotificationsEnabledOptions?> checkPermissions() =>
+      _channel.invokeMethod<Map<dynamic, dynamic>?>('checkPermissions').then(
+        (Map<dynamic, dynamic>? dict) {
+          if (dict == null) {
+            return null;
+          }
+
+          return NotificationsEnabledOptions(
+            isEnabled: dict['isEnabled'] ?? false,
+            isAlertEnabled: dict['isAlertEnabled'] ?? false,
+            isBadgeEnabled: dict['isBadgeEnabled'] ?? false,
+            isSoundEnabled: dict['isSoundEnabled'] ?? false,
+            isProvisionalEnabled: dict['isProvisionalEnabled'] ?? false,
+            isCriticalEnabled: dict['isCriticalEnabled'] ?? false,
+          );
+        },
+      );
 
   /// Schedules a notification to be shown at the specified time in the
   /// future in a specific time zone.
@@ -746,56 +695,6 @@ class IOSFlutterLocalNotificationsPlugin
               : <String, Object>{
                   'matchDateTimeComponents': matchDateTimeComponents.index
                 }));
-  }
-
-  /// Shows a notification on a daily interval at the specified time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showDailyAtTime(
-    int id,
-    String? title,
-    String? body,
-    Time notificationTime,
-    DarwinNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('showDailyAtTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.daily.index,
-      'repeatTime': notificationTime.toMap(),
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
-  }
-
-  /// Shows a notification on weekly interval at the specified day and time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showWeeklyAtDayAndTime(
-    int id,
-    String? title,
-    String? body,
-    Day day,
-    Time notificationTime,
-    DarwinNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('showWeeklyAtDayAndTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.weekly.index,
-      'repeatTime': notificationTime.toMap(),
-      'day': day.value,
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
   }
 
   @override
@@ -880,7 +779,7 @@ class MacOSFlutterLocalNotificationsPlugin
   /// Initialisation may also request notification permissions where users will
   /// see a permissions prompt. This may be fine in cases where it's acceptable
   /// to do this when the application runs for the first time. However, if your
-  /// applicationn needs to do this at a later point in time, set the
+  /// application needs to do this at a later point in time, set the
   /// [DarwinInitializationSettings.requestAlertPermission],
   /// [DarwinInitializationSettings.requestBadgePermission] and
   /// [DarwinInitializationSettings.requestSoundPermission] values to false.
@@ -907,13 +806,35 @@ class MacOSFlutterLocalNotificationsPlugin
     bool sound = false,
     bool alert = false,
     bool badge = false,
+    bool provisional = false,
     bool critical = false,
   }) =>
       _channel.invokeMethod<bool>('requestPermissions', <String, bool?>{
         'sound': sound,
         'alert': alert,
         'badge': badge,
+        'provisional': provisional,
         'critical': critical,
+      });
+
+  /// Returns whether the app can post notifications and what kind of.
+  ///
+  /// See [NotificationsEnabledOptions] for more info.
+  Future<NotificationsEnabledOptions?> checkPermissions() => _channel
+          .invokeMethod<Map<dynamic, dynamic>>('checkPermissions')
+          .then((Map<dynamic, dynamic>? dict) {
+        if (dict == null) {
+          return null;
+        }
+
+        return NotificationsEnabledOptions(
+          isEnabled: dict['isEnabled'] ?? false,
+          isAlertEnabled: dict['isAlertEnabled'] ?? false,
+          isBadgeEnabled: dict['isBadgeEnabled'] ?? false,
+          isSoundEnabled: dict['isSoundEnabled'] ?? false,
+          isProvisionalEnabled: dict['isProvisionalEnabled'] ?? false,
+          isCriticalEnabled: dict['isCriticalEnabled'] ?? false,
+        );
       });
 
   /// Schedules a notification to be shown at the specified date and time

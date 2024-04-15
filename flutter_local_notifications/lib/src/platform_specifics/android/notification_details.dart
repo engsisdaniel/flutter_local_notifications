@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'bitmap.dart';
-import 'categories.dart';
 import 'enums.dart';
 import 'notification_sound.dart';
 import 'styles/style_information.dart';
@@ -116,12 +115,14 @@ class AndroidNotificationDetails {
     this.groupAlertBehavior = GroupAlertBehavior.all,
     this.autoCancel = true,
     this.ongoing = false,
+    this.silent = false,
     this.color,
     this.largeIcon,
     this.onlyAlertOnce = false,
     this.showWhen = true,
     this.when,
     this.usesChronometer = false,
+    this.chronometerCountDown = false,
     this.channelShowBadge = true,
     this.showProgress = false,
     this.maxProgress = 0,
@@ -240,6 +241,9 @@ class AndroidNotificationDetails {
   /// Specifies if the notification will be "ongoing".
   final bool ongoing;
 
+  /// Specifies if the notification will be "silent".
+  final bool silent;
+
   /// Specifies the color.
   final Color? color;
 
@@ -273,6 +277,11 @@ class AndroidNotificationDetails {
   /// automatically updating display of the minutes and seconds since [when].
   /// Useful when showing an elapsed time (like an ongoing phone call).
   final bool usesChronometer;
+
+  /// Sets the chronometer to count down instead of counting up.
+  ///
+  /// This property is only applicable to Android 7.0 and newer versions.
+  final bool chronometerCountDown;
 
   /// Specifies if the notification will be used to show progress.
   final bool showProgress;
