@@ -704,8 +704,8 @@ public class FlutterLocalNotificationsPlugin
       long notificationTriggerTime, String startTimeString, String endTimeString) {
     if (startTimeString == null || endTimeString == null) return true;
 
-    LocalTime startTime = LocalTime.parse(startTimeString, DateTimeFormatter.ofPattern("HH:mm"));
-    LocalTime endTime = LocalTime.parse(endTimeString, DateTimeFormatter.ofPattern("HH:mm"));
+    LocalTime startTime = LocalTime.parse(startTimeString);
+    LocalTime endTime = LocalTime.parse(endTimeString);
     if (startTime == null || endTime == null) return true;
 
     DateFormat formatter = new SimpleDateFormat("HH:mm");
@@ -713,8 +713,7 @@ public class FlutterLocalNotificationsPlugin
 
     calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
     LocalTime triggerTime =
-        LocalTime.parse(
-            formatter.format(calendarTriggerTime.getTime()), DateTimeFormatter.ofPattern("HH:mm"));
+        LocalTime.parse(formatter.format(calendarTriggerTime.getTime()));
 
     if (endTime.compareTo(startTime) >= 0) {
       return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
