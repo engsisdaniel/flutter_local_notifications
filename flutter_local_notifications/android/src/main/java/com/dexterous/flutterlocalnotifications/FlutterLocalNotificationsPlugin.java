@@ -712,8 +712,7 @@ public class FlutterLocalNotificationsPlugin
     Calendar calendarTriggerTime = Calendar.getInstance();
 
     calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-    LocalTime triggerTime =
-        LocalTime.parse(formatter.format(calendarTriggerTime.getTime()));
+    LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()));
 
     if (endTime.compareTo(startTime) >= 0) {
       return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
