@@ -684,7 +684,7 @@ public class FlutterLocalNotificationsPlugin
       // being added to the deserialiser.
       // Reference to old behaviour:
       // https://github.com/MaikuB/flutter_local_notifications/blob/4b723e750d1371206520b10a122a444c4bba7475/flutter_local_notifications/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java#L642
-      notificationDetails.scheduleMode = ScheduleMode.inexact;
+      notificationDetails.scheduleMode = ScheduleMode.exactAllowWhileIdle;
     }
 
     if (notificationDetails.scheduleMode.useAllowWhileIdle()) {
@@ -732,7 +732,7 @@ public class FlutterLocalNotificationsPlugin
       // being added to the deserialiser.
       // Reference to old behaviour:
       // https://github.com/MaikuB/flutter_local_notifications/blob/4b723e750d1371206520b10a122a444c4bba7475/flutter_local_notifications/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java#L515
-      notificationDetails.scheduleMode = ScheduleMode.exact;
+      notificationDetails.scheduleMode = ScheduleMode.exactAllowWhileIdle;
     }
 
     if (notificationDetails.scheduleMode.useAllowWhileIdle()) {
