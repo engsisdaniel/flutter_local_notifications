@@ -334,6 +334,7 @@ class AndroidFlutterLocalNotificationsPlugin
     DateTime? initialDate, // Data de início para disparo do alarme
     int? repeatMinutes, // Minutos até o próximo alarme
     String? customRepeatInterval,
+    List<int>? daysOfWeek, // dias da semana 1 - 7 em que pode tocar o alarme
     String? startTime, // Horário inicial em que pode tocar o alarme: "HH:mm"
     String? endTime, // Horário final em que pode tocar o alarme: "HH:mm"
     AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
@@ -348,6 +349,7 @@ class AndroidFlutterLocalNotificationsPlugin
       'repeatInterval': repeatInterval.index,
       'repeatMinutes': repeatMinutes,
       'customRepeatInterval': customRepeatInterval,
+      'daysOfWeek': daysOfWeek ?? <int>[1, 2, 3, 4, 5, 6, 7],
       'startTime': startTime ?? '00:00',
       'endTime': endTime ?? '23:59',
       'platformSpecifics':

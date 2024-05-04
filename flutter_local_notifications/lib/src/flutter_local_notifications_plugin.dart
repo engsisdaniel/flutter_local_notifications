@@ -413,6 +413,7 @@ class FlutterLocalNotificationsPlugin {
     @Deprecated('Deprecated in favor of the androidScheduleMode parameter')
     bool androidAllowWhileIdle = false,
     DateTime? initialDate, // Data de início para disparo do alarme
+    List<int>? daysOfWeek,
     String? startTime,
     String? endTime,
     int? repeatMinutes, // Minutos até o próximo alarme
@@ -431,6 +432,7 @@ class FlutterLocalNotificationsPlugin {
               initialDate: initialDate,
               repeatMinutes: repeatMinutes,
               customRepeatInterval: customRepeatInterval,
+              daysOfWeek: daysOfWeek,
               startTime: startTime,
               endTime: endTime,
               scheduleMode: _chooseScheduleMode(

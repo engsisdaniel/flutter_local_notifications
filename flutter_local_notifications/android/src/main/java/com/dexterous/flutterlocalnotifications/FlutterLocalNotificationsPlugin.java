@@ -700,8 +700,26 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
+  private static boolean isOnValidWeekDay(
+    long notificationTriggerTime, int[] daysOfWeek) {
+    if (daysOfWeek == null) return true;
+
+    Calendar calendarTriggerTime = Calendar.getInstance();
+
+    calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
+    int day = calendarTriggerTime.get(Calendar.DAY_OF_WEEK);
+
+    for (int d : daysOfWeek) {
+      if (day == d) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private static boolean isOnValidInterval(
-      long notificationTriggerTime, String startTimeString, String endTimeString) {
+    long notificationTriggerTime, String startTimeString, String endTimeString) {
     if (startTimeString == null || endTimeString == null) return true;
 
     LocalTime startTime = LocalTime.parse(startTimeString);
@@ -784,8 +802,9 @@ public class FlutterLocalNotificationsPlugin
     cal.setTimeInMillis(notificationTriggerTime);
 
     while (notificationTriggerTime < currentTime
+        || !isOnValidWeekDay(notificationTriggerTime, notificationDetails.daysOfWeek)
         || !isOnValidInterval(
-            notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
+              notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
       if (notificationDetails.customRepeatInterval != null) {
         switch (notificationDetails.customRepeatInterval) {
           case "Annually":

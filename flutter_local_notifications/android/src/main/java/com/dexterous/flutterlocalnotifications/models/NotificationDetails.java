@@ -33,6 +33,7 @@ public class NotificationDetails implements Serializable {
   private static final String CUSTOM_REPEAT_INTERVAL = "customRepeatInterval";
   private static final String REPEAT_TIME = "repeatTime";
   private static final String REPEAT_MINUTES = "repeatMinutes";
+  private static final String DAYS_OF_WEEK = "daysOfWeek";
   private static final String START_TIME = "startTime";
   private static final String END_TIME = "endTime";
   private static final String PLATFORM_SPECIFICS = "platformSpecifics";
@@ -151,6 +152,7 @@ public class NotificationDetails implements Serializable {
   public RepeatInterval repeatInterval;
   public String customRepeatInterval;
   public Integer repeatMinutes;
+  public int[] daysOfWeek;
   public String startTime;
   public String endTime;
   public Time repeatTime;
@@ -239,6 +241,9 @@ public class NotificationDetails implements Serializable {
     }
     if (arguments.containsKey(REPEAT_MINUTES)) {
       notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
+    }
+    if (arguments.containsKey(DAYS_OF_WEEK)) {
+      notificationDetails.daysOfWeek = (String) arguments.get(DAYS_OF_WEEK);
     }
     if (arguments.containsKey(START_TIME)) {
       notificationDetails.startTime = (String) arguments.get(START_TIME);
