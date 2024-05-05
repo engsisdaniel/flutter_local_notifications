@@ -244,7 +244,7 @@ public class NotificationDetails implements Serializable {
     }
     if (arguments.containsKey(DAYS_OF_WEEK)) {
       ArrayList<Integer> daysOfWeekList = (ArrayList<Integer>) arguments.get(DAYS_OF_WEEK);
-      notificationDetails.daysOfWeek = daysOfWeekList.stream().mapToInt(Integer::valueOf).toArray();
+      notificationDetails.daysOfWeek = daysOfWeekList.stream().mapToInt(x -> (Integer) x).toArray();
     }
     if (arguments.containsKey(START_TIME)) {
       notificationDetails.startTime = (String) arguments.get(START_TIME);
