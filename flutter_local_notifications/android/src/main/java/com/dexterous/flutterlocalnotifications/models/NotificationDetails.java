@@ -243,7 +243,8 @@ public class NotificationDetails implements Serializable {
       notificationDetails.repeatMinutes = (Integer) arguments.get(REPEAT_MINUTES);
     }
     if (arguments.containsKey(DAYS_OF_WEEK)) {
-      notificationDetails.daysOfWeek = (int[]) arguments.get(DAYS_OF_WEEK);
+      ArrayList<Integer> daysOfWeekList = (ArrayList<Integer>) arguments.get(DAYS_OF_WEEK);
+      notificationDetails.daysOfWeek = daysOfWeekList.stream().mapToInt(Integer::valueOf).toArray();
     }
     if (arguments.containsKey(START_TIME)) {
       notificationDetails.startTime = (String) arguments.get(START_TIME);
