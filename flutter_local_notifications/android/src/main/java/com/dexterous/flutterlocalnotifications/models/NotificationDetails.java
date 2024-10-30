@@ -31,6 +31,7 @@ public class NotificationDetails implements Serializable {
   private static final String CALLED_AT = "calledAt";
   private static final String REPEAT_INTERVAL = "repeatInterval";
   private static final String CUSTOM_REPEAT_INTERVAL = "customRepeatInterval";
+  private static final String REPEAT_INTERVAL_MILLISECONDS = "repeatIntervalMilliseconds";
   private static final String REPEAT_TIME = "repeatTime";
   private static final String REPEAT_MINUTES = "repeatMinutes";
   private static final String DAYS_OF_WEEK = "daysOfWeek";
@@ -155,6 +156,7 @@ public class NotificationDetails implements Serializable {
   public int[] daysOfWeek;
   public String startTime;
   public String endTime;
+  public Integer repeatIntervalMilliseconds;
   public Time repeatTime;
   public Long millisecondsSinceEpoch;
   public Long calledAt;
@@ -251,6 +253,10 @@ public class NotificationDetails implements Serializable {
     }
     if (arguments.containsKey(END_TIME)) {
       notificationDetails.endTime = (String) arguments.get(END_TIME);
+    }
+    if (arguments.containsKey(REPEAT_INTERVAL_MILLISECONDS)) {
+      notificationDetails.repeatIntervalMilliseconds =
+          (Integer) arguments.get(REPEAT_INTERVAL_MILLISECONDS);
     }
     if (arguments.containsKey(REPEAT_TIME)) {
       @SuppressWarnings("unchecked")
@@ -484,7 +490,7 @@ public class NotificationDetails implements Serializable {
         result.add(
             new MessageDetails(
                 (String) messageData.get(TEXT),
-                (Long) messageData.get(TIMESTAMP),
+                LongUtils.parseLong(messageData.get(TIMESTAMP)),
                 readPersonDetails((Map<String, Object>) messageData.get(PERSON)),
                 (String) messageData.get(DATA_MIME_TYPE),
                 (String) messageData.get(DATA_URI)));

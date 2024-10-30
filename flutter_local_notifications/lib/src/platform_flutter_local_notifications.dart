@@ -25,7 +25,6 @@ import 'platform_specifics/darwin/mappers.dart';
 import 'platform_specifics/darwin/notification_details.dart';
 import 'platform_specifics/darwin/notification_enabled_options.dart';
 import 'platform_specifics/ios/enums.dart';
-import 'typedefs.dart';
 import 'types.dart';
 import 'tz_datetime_mapper.dart';
 
@@ -98,6 +97,7 @@ class MethodChannelFlutterLocalNotificationsPlugin
                   title: p['title'],
                   body: p['body'],
                   payload: p['payload'],
+                  bigText: p['bigText'],
                 ))
             .toList() ??
         <ActiveNotification>[];
@@ -107,6 +107,12 @@ class MethodChannelFlutterLocalNotificationsPlugin
 /// Android implementation of the local notifications plugin.
 class AndroidFlutterLocalNotificationsPlugin
     extends MethodChannelFlutterLocalNotificationsPlugin {
+  /// Registers this implementation as the plugin instance.
+  static void registerWith() {
+    FlutterLocalNotificationsPlatform.instance =
+        AndroidFlutterLocalNotificationsPlugin();
+  }
+
   DidReceiveNotificationResponseCallback? _ondidReceiveNotificationResponse;
 
   /// Initializes the plugin.
@@ -153,6 +159,20 @@ class AndroidFlutterLocalNotificationsPlugin
   /// for official Android documentation.
   Future<bool?> requestExactAlarmsPermission() async =>
       _channel.invokeMethod<bool>('requestExactAlarmsPermission');
+
+  /// Requests the permission to send/use full-screen intents.
+  ///
+  /// Returns whether the permission was granted.
+  ///
+  /// Use this when your application requires the [`USE_FULL_SCREEN_INTENT`](https://developer.android.com/reference/android/Manifest.permission#SCHEDULE_EXACT_ALARM)
+  /// permission and targets Android 14 or higher. The reason for this is that
+  /// the permission is granted by default. However, applications that do not
+  /// have calling or alarm functionalities have the permission revoked by the
+  /// Google Play Store. See
+  /// [here](https://source.android.com/docs/core/permissions/fsi-limits)
+  /// for official Android documentation.
+  Future<bool?> requestFullScreenIntentPermission() async =>
+      _channel.invokeMethod<bool>('requestFullScreenIntentPermission');
 
   /// Requests the permission for sending notifications. Returns whether the
   /// permission was granted.
@@ -358,6 +378,31 @@ class AndroidFlutterLocalNotificationsPlugin
     });
   }
 
+  @override
+  Future<void> periodicallyShowWithDuration(
+    int id,
+    String? title,
+    String? body,
+    Duration repeatDurationInterval, {
+    AndroidNotificationDetails? notificationDetails,
+    String? payload,
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
+  }) async {
+    validateId(id);
+    validateRepeatDurationInterval(repeatDurationInterval);
+    await _channel
+        .invokeMethod('periodicallyShowWithDuration', <String, Object?>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': clock.now().millisecondsSinceEpoch,
+      'repeatIntervalMilliseconds': repeatDurationInterval.inMilliseconds,
+      'platformSpecifics':
+          _buildPlatformSpecifics(notificationDetails, scheduleMode),
+      'payload': payload ?? '',
+    });
+  }
+
   Map<String, Object?> _buildPlatformSpecifics(
     AndroidNotificationDetails? notificationDetails,
     AndroidScheduleMode scheduleMode,
@@ -505,6 +550,11 @@ class AndroidFlutterLocalNotificationsPlugin
               enableVibration: a['enableVibration'],
               vibrationPattern: a['vibrationPattern'],
               ledColor: Color(a['ledColor']),
+              audioAttributesUsage: AudioAttributesUsage.values.firstWhere(
+                // ignore: always_specify_types
+                (e) => e.value == a['audioAttributesUsage'],
+                orElse: () => AudioAttributesUsage.notification,
+              ),
             ))
         .toList();
   }
@@ -563,8 +613,13 @@ class AndroidFlutterLocalNotificationsPlugin
 /// iOS implementation of the local notifications plugin.
 class IOSFlutterLocalNotificationsPlugin
     extends MethodChannelFlutterLocalNotificationsPlugin {
+  /// Registers this implementation as the plugin instance.
+  static void registerWith() {
+    FlutterLocalNotificationsPlatform.instance =
+        IOSFlutterLocalNotificationsPlugin();
+  }
+
   DidReceiveNotificationResponseCallback? _onDidReceiveNotificationResponse;
-  DidReceiveLocalNotificationCallback? _onDidReceiveLocalNotification;
 
   /// Initializes the plugin.
   ///
@@ -600,8 +655,6 @@ class IOSFlutterLocalNotificationsPlugin
         onDidReceiveBackgroundNotificationResponse,
   }) async {
     _onDidReceiveNotificationResponse = onDidReceiveNotificationResponse;
-    _onDidReceiveLocalNotification =
-        initializationSettings.onDidReceiveLocalNotification;
     _channel.setMethodCallHandler(_handleMethod);
 
     final Map<String, Object> arguments = initializationSettings.toMap();
@@ -741,6 +794,29 @@ class IOSFlutterLocalNotificationsPlugin
     });
   }
 
+  @override
+  Future<void> periodicallyShowWithDuration(
+    int id,
+    String? title,
+    String? body,
+    Duration repeatDurationInterval, {
+    DarwinNotificationDetails? notificationDetails,
+    String? payload,
+  }) async {
+    validateId(id);
+    validateRepeatDurationInterval(repeatDurationInterval);
+    await _channel
+        .invokeMethod('periodicallyShowWithDuration', <String, Object?>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': clock.now().millisecondsSinceEpoch,
+      'repeatIntervalMilliseconds': repeatDurationInterval.inMilliseconds,
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
   Future<void> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case 'didReceiveNotificationResponse':
@@ -755,13 +831,6 @@ class IOSFlutterLocalNotificationsPlugin
           ),
         );
         break;
-      case 'didReceiveLocalNotification':
-        _onDidReceiveLocalNotification!(
-            call.arguments['id'],
-            call.arguments['title'],
-            call.arguments['body'],
-            call.arguments['payload']);
-        break;
       default:
         return await Future<void>.error('Method not defined');
     }
@@ -771,6 +840,12 @@ class IOSFlutterLocalNotificationsPlugin
 /// macOS implementation of the local notifications plugin.
 class MacOSFlutterLocalNotificationsPlugin
     extends MethodChannelFlutterLocalNotificationsPlugin {
+  /// Registers this implementation as the plugin instance.
+  static void registerWith() {
+    FlutterLocalNotificationsPlatform.instance =
+        MacOSFlutterLocalNotificationsPlugin();
+  }
+
   DidReceiveNotificationResponseCallback? _onDidReceiveNotificationResponse;
 
   /// Initializes the plugin.
@@ -908,6 +983,29 @@ class MacOSFlutterLocalNotificationsPlugin
       'body': body,
       'calledAt': clock.now().millisecondsSinceEpoch,
       'repeatInterval': repeatInterval.index,
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
+  @override
+  Future<void> periodicallyShowWithDuration(
+    int id,
+    String? title,
+    String? body,
+    Duration repeatDurationInterval, {
+    DarwinNotificationDetails? notificationDetails,
+    String? payload,
+  }) async {
+    validateId(id);
+    validateRepeatDurationInterval(repeatDurationInterval);
+    await _channel
+        .invokeMethod('periodicallyShowWithDuration', <String, Object?>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': clock.now().millisecondsSinceEpoch,
+      'repeatIntervalMilliseconds': repeatDurationInterval.inMilliseconds,
       'platformSpecifics': notificationDetails?.toMap(),
       'payload': payload ?? ''
     });

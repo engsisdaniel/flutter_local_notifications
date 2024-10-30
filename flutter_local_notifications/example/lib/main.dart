@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,11 +20,6 @@ int id = 0;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
-
-/// Streams are created so that app can respond to notification-related events
-/// since the plugin is initialised in the `main` function
-final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
-    StreamController<ReceivedNotification>.broadcast();
 
 final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
@@ -153,17 +147,6 @@ Future<void> main() async {
     requestAlertPermission: false,
     requestBadgePermission: false,
     requestSoundPermission: false,
-    onDidReceiveLocalNotification:
-        (int id, String? title, String? body, String? payload) async {
-      didReceiveLocalNotificationStream.add(
-        ReceivedNotification(
-          id: id,
-          title: title,
-          body: body,
-          payload: payload,
-        ),
-      );
-    },
     notificationCategories: darwinNotificationCategories,
   );
   final LinuxInitializationSettings initializationSettingsLinux =
@@ -262,7 +245,6 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _isAndroidPermissionGranted();
     _requestPermissions();
-    _configureDidReceiveLocalNotificationSubject();
     _configureSelectNotificationSubject();
   }
 
@@ -311,38 +293,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _configureDidReceiveLocalNotificationSubject() {
-    didReceiveLocalNotificationStream.stream
-        .listen((ReceivedNotification receivedNotification) async {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) => CupertinoAlertDialog(
-          title: receivedNotification.title != null
-              ? Text(receivedNotification.title!)
-              : null,
-          content: receivedNotification.body != null
-              ? Text(receivedNotification.body!)
-              : null,
-          actions: <Widget>[
-            CupertinoDialogAction(
-              isDefaultAction: true,
-              onPressed: () async {
-                Navigator.of(context, rootNavigator: true).pop();
-                await Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) =>
-                        SecondPage(receivedNotification.payload),
-                  ),
-                );
-              },
-              child: const Text('Ok'),
-            )
-          ],
-        ),
-      );
-    });
-  }
-
   void _configureSelectNotificationSubject() {
     selectNotificationStream.stream.listen((String? payload) async {
       await Navigator.of(context).push(MaterialPageRoute<void>(
@@ -353,7 +303,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    didReceiveLocalNotificationStream.close();
     selectNotificationStream.close();
     super.dispose();
   }
@@ -447,6 +396,12 @@ class _HomePageState extends State<HomePage> {
                       buttonText: 'Repeat notification every minute',
                       onPressed: () async {
                         await _repeatNotification();
+                      },
+                    ),
+                    PaddedElevatedButton(
+                      buttonText: 'Repeat notification every 5 minutes',
+                      onPressed: () async {
+                        await _repeatPeriodicallyWithDurationNotification();
                       },
                     ),
                     PaddedElevatedButton(
@@ -747,6 +702,13 @@ class _HomePageState extends State<HomePage> {
                       buttonText: 'Show notification with chronometer',
                       onPressed: () async {
                         await _showNotificationWithChronometer();
+                      },
+                    ),
+                    PaddedElevatedButton(
+                      buttonText:
+                          'Request full-screen intent permission (API 34+)',
+                      onPressed: () async {
+                        await _requestFullScreenIntentPermission();
                       },
                     ),
                     PaddedElevatedButton(
@@ -1266,6 +1228,28 @@ class _HomePageState extends State<HomePage> {
         payload: 'item x');
   }
 
+  Future<void> _requestFullScreenIntentPermission() async {
+    final bool permissionGranted = await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestFullScreenIntentPermission() ??
+        false;
+    await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+              content: Text(
+                  'Full screen intent permission granted: $permissionGranted'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ));
+  }
+
   Future<void> _showFullScreenNotification() async {
     await showDialog(
       context: context,
@@ -1273,7 +1257,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Turn off your screen'),
         content: const Text(
             'to see the full-screen intent in 5 seconds, press OK and TURN '
-            'OFF your screen'),
+            'OFF your screen. Note that the full-screen intent permission must '
+            'be granted for this to work too'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -1891,6 +1876,23 @@ class _HomePageState extends State<HomePage> {
       'repeating title',
       'repeating body',
       RepeatInterval.everyMinute,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> _repeatPeriodicallyWithDurationNotification() async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+            'repeating channel id', 'repeating channel name',
+            channelDescription: 'repeating description');
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+    await flutterLocalNotificationsPlugin.periodicallyShowWithDuration(
+      id++,
+      'repeating period title',
+      'repeating period body',
+      const Duration(minutes: 5),
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
@@ -2638,7 +2640,9 @@ class _HomePageState extends State<HomePage> {
                     'title: ${activeNotification.title}\n'
                     'body: ${activeNotification.body}',
                   ),
-                  if (Platform.isAndroid && activeNotification.id != null)
+                  if (Platform.isAndroid &&
+                      activeNotification.id != null) ...<Widget>[
+                    Text('bigText: ${activeNotification.bigText}'),
                     TextButton(
                       child: const Text('Get messaging style'),
                       onPressed: () {
@@ -2646,6 +2650,7 @@ class _HomePageState extends State<HomePage> {
                             activeNotification.id!, activeNotification.tag);
                       },
                     ),
+                  ],
                   const Divider(color: Colors.black),
                 ],
               ),
@@ -2814,7 +2819,8 @@ class _HomePageState extends State<HomePage> {
                         'vibrationPattern: ${channel.vibrationPattern}\n'
                         'showBadge: ${channel.showBadge}\n'
                         'enableLights: ${channel.enableLights}\n'
-                        'ledColor: ${channel.ledColor}\n'),
+                        'ledColor: ${channel.ledColor}\n'
+                        'audioAttributesUsage: ${channel.audioAttributesUsage}\n'),
                     const Divider(color: Colors.black),
                   ],
                 ),
