@@ -24,7 +24,6 @@ import 'platform_specifics/darwin/initialization_settings.dart';
 import 'platform_specifics/darwin/mappers.dart';
 import 'platform_specifics/darwin/notification_details.dart';
 import 'platform_specifics/darwin/notification_enabled_options.dart';
-import 'platform_specifics/ios/enums.dart';
 import 'types.dart';
 import 'tz_datetime_mapper.dart';
 
@@ -52,8 +51,9 @@ class MethodChannelFlutterLocalNotificationsPlugin
         result != null && result.containsKey('notificationResponse')
             ? result['notificationResponse']
             : null;
-    return result != null
-        ? NotificationAppLaunchDetails(
+    return result == null
+        ? null
+        : NotificationAppLaunchDetails(
             result['notificationLaunchedApp'],
             notificationResponse: notificationResponse == null
                 ? null
@@ -66,9 +66,11 @@ class MethodChannelFlutterLocalNotificationsPlugin
                     payload: notificationResponse.containsKey('payload')
                         ? notificationResponse['payload']
                         : null,
+                    data: Map<String, dynamic>.from(
+                      notificationResponse['data'] ?? <String, dynamic>{},
+                    ),
                   ),
-          )
-        : null;
+          );
   }
 
   @override
@@ -113,7 +115,7 @@ class AndroidFlutterLocalNotificationsPlugin
         AndroidFlutterLocalNotificationsPlugin();
   }
 
-  DidReceiveNotificationResponseCallback? _ondidReceiveNotificationResponse;
+  DidReceiveNotificationResponseCallback? _onDidReceiveNotificationResponse;
 
   /// Initializes the plugin.
   ///
@@ -137,7 +139,7 @@ class AndroidFlutterLocalNotificationsPlugin
     DidReceiveBackgroundNotificationResponseCallback?
         onDidReceiveBackgroundNotificationResponse,
   }) async {
-    _ondidReceiveNotificationResponse = onDidReceiveNotificationResponse;
+    _onDidReceiveNotificationResponse = onDidReceiveNotificationResponse;
     _channel.setMethodCallHandler(_handleMethod);
 
     final Map<String, Object> arguments = initializationSettings.toMap();
@@ -230,7 +232,7 @@ class AndroidFlutterLocalNotificationsPlugin
   /// a foreground service with a notification id of 0.
   ///
   /// Since not all users of this plugin need such a service, it was not
-  /// added to this plugins Android manifest. Thie means you have to add
+  /// added to this plugins Android manifest. This means you have to add
   /// it if you want to use the foreground service functionality. Add the
   /// foreground service permission to your apps `AndroidManifest.xml` like
   /// described in the [official Android documentation](https://developer.android.com/guide/components/foreground-services#request-foreground-service-permissions):
@@ -257,11 +259,11 @@ class AndroidFlutterLocalNotificationsPlugin
   /// The notification of the foreground service can be updated by
   /// simply calling this method multiple times.
   ///
-  /// Information on selecting an appropriate `startType` for your app's usecase
-  /// should be taken from the official Android documentation, check [`Service.onStartCommand`](https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)).
+  /// Information on selecting an appropriate `startType` for your app's use
+  /// case should be taken from the official Android documentation, check [`Service.onStartCommand`](https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)).
   /// The there mentioned constants can be found in [AndroidServiceStartType].
   ///
-  /// The notification for the foreground service will not be dismissable
+  /// The notification for the foreground service will not be dismissible
   /// and automatically removed when using [stopForegroundService].
   ///
   /// `foregroundServiceType` is a set of foreground service types to apply to
@@ -593,7 +595,7 @@ class AndroidFlutterLocalNotificationsPlugin
   Future<void> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case 'didReceiveNotificationResponse':
-        _ondidReceiveNotificationResponse?.call(
+        _onDidReceiveNotificationResponse?.call(
           NotificationResponse(
             id: call.arguments['notificationId'],
             actionId: call.arguments['actionId'],
@@ -705,32 +707,17 @@ class IOSFlutterLocalNotificationsPlugin
 
   /// Schedules a notification to be shown at the specified time in the
   /// future in a specific time zone.
-  ///
-  /// Due to the limited support for time zones provided the UILocalNotification
-  /// APIs used on devices using iOS versions older than 10, the
-  /// [uiLocalNotificationDateInterpretation] is needed to control how
-  /// [scheduledDate] is interpreted. See official docs at
-  /// https://developer.apple.com/documentation/uikit/uilocalnotification/1616659-timezone
-  /// for more details. Note that due to this limited support, it's likely that
-  /// on older iOS devices, there will still be issues with daylight saving time
-  /// except for when the time zone used in the [scheduledDate] matches the
-  /// device's time zone and [uiLocalNotificationDateInterpretation] is set to
-  /// [UILocalNotificationDateInterpretation.wallClockTime].
   Future<void> zonedSchedule(
     int id,
     String? title,
     String? body,
     TZDateTime scheduledDate,
     DarwinNotificationDetails? notificationDetails, {
-    required UILocalNotificationDateInterpretation
-        uiLocalNotificationDateInterpretation,
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
     validateId(id);
     validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
-    ArgumentError.checkNotNull(uiLocalNotificationDateInterpretation,
-        'uiLocalNotificationDateInterpretation');
     final Map<String, Object?> serializedPlatformSpecifics =
         notificationDetails?.toMap() ?? <String, Object>{};
     await _channel.invokeMethod(
@@ -741,8 +728,6 @@ class IOSFlutterLocalNotificationsPlugin
           'body': body,
           'platformSpecifics': serializedPlatformSpecifics,
           'payload': payload ?? '',
-          'uiLocalNotificationDateInterpretation':
-              uiLocalNotificationDateInterpretation.index,
         }
           ..addAll(scheduledDate.toMap())
           ..addAll(matchDateTimeComponents == null
@@ -1047,7 +1032,7 @@ void _evaluateBackgroundNotificationCallback(
     final CallbackHandle? callback = PluginUtilities.getCallbackHandle(
         didReceiveBackgroundNotificationResponseCallback);
     assert(callback != null, '''
-          The backgroundHandler needs to be either a static function or a top 
+          The backgroundHandler needs to be either a static function or a top
           level function to be accessible as a Flutter entry point.''');
 
     final CallbackHandle? dispatcher =
