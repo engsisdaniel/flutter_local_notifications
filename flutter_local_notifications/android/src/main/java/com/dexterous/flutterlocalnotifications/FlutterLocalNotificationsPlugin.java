@@ -847,7 +847,7 @@ public class FlutterLocalNotificationsPlugin
       repeatInterval = 60000 * notificationDetails.repeatMinutes;
       return repeatInterval;
     }
-    
+
     if (notificationDetails.repeatIntervalMilliseconds != null) {
       repeatInterval = notificationDetails.repeatIntervalMilliseconds;
       return repeatInterval;
