@@ -833,14 +833,26 @@ class IOSFlutterLocalNotificationsPlugin
     RepeatInterval repeatInterval, {
     DarwinNotificationDetails? notificationDetails,
     String? payload,
+    DateTime? initialDate,
+    int? repeatMinutes,
+    String? customRepeatInterval,
+    List<int>? daysOfWeek,
+    String? startTime,
+    String? endTime,
   }) async {
     validateId(id);
     await _channel.invokeMethod('periodicallyShow', <String, Object?>{
       'id': id,
       'title': title,
       'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
+      'calledAt': initialDate?.millisecondsSinceEpoch ??
+          clock.now().millisecondsSinceEpoch,
       'repeatInterval': repeatInterval.index,
+      'repeatMinutes': repeatMinutes,
+      'customRepeatInterval': customRepeatInterval,
+      'daysOfWeek': daysOfWeek ?? <int>[1, 2, 3, 4, 5, 6, 7],
+      'startTime': startTime ?? '00:00',
+      'endTime': endTime ?? '23:59',
       'platformSpecifics': notificationDetails?.toMap(),
       'payload': payload ?? '',
     });
@@ -1032,14 +1044,26 @@ class MacOSFlutterLocalNotificationsPlugin
     RepeatInterval repeatInterval, {
     DarwinNotificationDetails? notificationDetails,
     String? payload,
+    DateTime? initialDate,
+    int? repeatMinutes,
+    String? customRepeatInterval,
+    List<int>? daysOfWeek,
+    String? startTime,
+    String? endTime,
   }) async {
     validateId(id);
     await _channel.invokeMethod('periodicallyShow', <String, Object?>{
       'id': id,
       'title': title,
       'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
+      'calledAt': initialDate?.millisecondsSinceEpoch ??
+          clock.now().millisecondsSinceEpoch,
       'repeatInterval': repeatInterval.index,
+      'repeatMinutes': repeatMinutes,
+      'customRepeatInterval': customRepeatInterval,
+      'daysOfWeek': daysOfWeek ?? <int>[1, 2, 3, 4, 5, 6, 7],
+      'startTime': startTime ?? '00:00',
+      'endTime': endTime ?? '23:59',
       'platformSpecifics': notificationDetails?.toMap(),
       'payload': payload ?? '',
     });
