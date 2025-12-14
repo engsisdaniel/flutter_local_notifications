@@ -1,5 +1,56 @@
-## [19.0.0]
+## [20.0.0-dev.1]
 
+* **Breaking change** bumped minimum Flutter SDK requirement to 3.32.0 and Dart SDK requirement to 3.8.0
+* [Windows] **Breaking change** removed the `details` parameter from the `zonedScheduleRawXml()` method as it was not actually used. Thanks to the PR from [Levi Lesches](https://github.com/Levi-Lesches)
+* Updated readme with information for developers that plan to move to use the UIScene lifecycle
+* Added `flutter_lints` to apply linter rules
+
+## [19.5.0]
+
+* [iOS][macOS] added `requestProvidesAppNotificationSettings` option to `DarwinInitializationSettings` class, and `isProvidesAppNotificationSettingsEnabled` to `NotificationsEnabledOptions` class. This allows applications to show a "Configure Notifications in <app name>" option when showing the context menu for an individual notification. This can be used for scenarios where an application can respond to the user selecting this option to show a custom page for controlling notification settings. Please note this whilst the API changes are applicable for iOS and macOS, the actual functionality only appears to be supported by Apple when it comes to iOS devices. See example app to see how this new functionality can be implemented. Thanks to the PR from [Luke Memet](https://github.com/lukemmtt)
+
+## [19.4.2]
+
+* [Windows] fixed issue where non-ASCII characters for the notification [application name](https://pub.dev/documentation/flutter_local_notifications/latest/flutter_local_notifications/WindowsInitializationSettings/appName.html) weren't being displayed properly. Thanks to the PR from [yoyoIU](https://github.com/yoyo930021)
+
+## [19.4.1]
+
+* [Android] fixed issue [#2675](https://github.com/MaikuB/flutter_local_notifications/issues/2675) where addition of `invisible` flag to notification actions could cause scheduled notifications with actions created prior to 19.4.0 to fail to show
+* Updated the Android release build configuration section to point to the latest [location](https://developer.android.com/topic/performance/app-optimization/customize-which-resources-to-keep) of the official Android docs on how to configure which resources (e.g. notification icons) are kept so they are not discarded by the Android compiler. It has also been reworded to make it clearer that this applies to all Android resources 
+
+## [19.4.0]
+
+* [Android] added ability to read `dataMimeType` and `dataUri` when calling `getActiveNotifications()` to read details of an active Android notification using the messaging style. Thanks to the PR from [Matt Bajorek](https://github.com/mattbajorek)
+* [Android] added support for Android semantic actions. Thanks to the PR from [Jared Szechy](https://github.com/szechyjs)
+
+## [19.3.1]
+
+* [Windows] fixed issue [#2648](https://github.com/MaikuB/flutter_local_notifications/issues/2648) where non-ASCII characters in the notification payload were not being handled properly. Thanks to the PR from [yoyoIU](https://github.com/yoyo930021)
+* [Windows] fixed issue [#2651](https://github.com/MaikuB/flutter_local_notifications/issues/2651) where unresolved symbols occurred with changes in introduced in newer Windows SDKs. Thanks to the PR from [Sebastien](https://github.com/Sebastien-VZN)
+
+## [19.3.0]
+
+* [Android][iOS][macOS] added `cancelAllPendingNotifications()` method for cancelling all pending notifications that have been scheduled. Thanks to the PR from [Kwon Tae Hyung](https://github.com/TaeBbong)
+
+## [19.2.1]
+
+* [macOS] removed redundant code that was only applicable on macOS versions lower than 10.14. This should be a non-functional change since 18.0.0 bumped the minimum Flutter SDK requirements that in turn required macOS 10.14 at a minimum. Thanks to the PR from [Blin Qipa](https://github.com/bqubique)
+* [Android] bumped robolectric dependency. This fixes an issue where some users reported receiving instances of `java.lang.NoClassDefFoundError` around the plugin's Android unit tests. Thanks to the PR from [Turtlepaw](https://github.com/Turtlepaw)
+
+## [19.2.0]
+
+* [Android] added support to bypass have notifications bypass the device's Do Not Disturb (DnD) settings. Thanks the PR from [Michel v. Varendorff](https://github.com/mvarendorff2) that added the following changes
+  * The `hasNotificationPolicyAccess()` method that checks if the application can modify the notification policy
+  * The `requestNotificationPolicyAccess()` method that was added the `AndroidFlutterNotificationsPlugin` class. This can be used request access for the calling application modify the notification policy
+  * Added `bypassDnd` the property of the `AndroidNotificationChannel` class and `channelBypassDnd` to the `AndroidNotificationDetails` class. These can used to indicate if notifications associated with the channel can bypass the DnD settings of the device
+* Bumped `msix` dev dependency in example app. This to fix the [issue](https://github.com/YehudaKremer/msix/issues/303) where the `msix` package stopped being able to created MSIX installers
+
+## [19.1.0]
+
+* [iOS][macOS] added supported to specify the volume for critical alerts. Thanks to the PR from [bannzai](https://github.com/bannzai)
+* Updated Gradle setup information in the readme to clarify that desugaring needs to be enabled even if scheduled notifications aren't used
+
+## [19.0.0]
 
 * [Android] **Breaking change** bumped `compileSdk` to 35 and updated readme to mention this
 * [Android] bumped GSON dependency to 2.12. As a result of doing so, applications should no longer need ProGuard rules related to this plugin that were needed for release builds to function. The readme has been updated to remove the associated setup to reflect this. Thanks to the PR from [Koji Wakamiya](https://github.com/koji-1009)

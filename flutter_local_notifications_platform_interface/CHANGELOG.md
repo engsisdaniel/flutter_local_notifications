@@ -1,3 +1,12 @@
+## [10.0.0-dev.1]
+
+* **Breaking change** bumped minimum Flutter SDK requirement to 3.32.0 and Dart SDK requirement to 3.8.0
+* Added `flutter_lints` to apply linter rules
+
+## [9.1.0]
+
+* Added `cancelAllPendingNotifications()` method for cancelling all pending notifications that have been scheduled. Thanks to the PR from [Kwon Tae Hyung](https://github.com/TaeBbong)
+
 ## [9.0.0]
 
 *  **Breaking change** bumped minimum Flutter SDK requirement to 3.22.0 and Dart SDK requirement to 3.4.0

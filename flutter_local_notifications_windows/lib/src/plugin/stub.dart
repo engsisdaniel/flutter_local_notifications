@@ -28,11 +28,11 @@ class FlutterLocalNotificationsWindows extends WindowsNotificationsBase {
 
   @override
   Future<NotificationAppLaunchDetails?>
-      getNotificationAppLaunchDetails() async => null;
+  getNotificationAppLaunchDetails() async => null;
 
   @override
   Future<List<PendingNotificationRequest>>
-      pendingNotificationRequests() async => <PendingNotificationRequest>[];
+  pendingNotificationRequests() async => <PendingNotificationRequest>[];
 
   @override
   Future<void> periodicallyShow(
@@ -81,15 +81,13 @@ class FlutterLocalNotificationsWindows extends WindowsNotificationsBase {
     int id,
     String xml,
     TZDateTime scheduledDate,
-    WindowsNotificationDetails? details,
   ) async {}
 
   @override
   Future<NotificationUpdateResult> updateBindings({
     required int id,
     required Map<String, String> bindings,
-  }) async =>
-      NotificationUpdateResult.success;
+  }) async => NotificationUpdateResult.success;
 
   @override
   bool isValidXml(String xml) => false;
