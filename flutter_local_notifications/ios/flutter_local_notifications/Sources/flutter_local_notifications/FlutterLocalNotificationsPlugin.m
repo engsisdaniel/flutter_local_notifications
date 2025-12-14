@@ -592,74 +592,79 @@ static FlutterError *getFlutterError(NSError *error) {
     API_AVAILABLE(ios(10.0)) {
   UNMutableNotificationContent *content =
       [self buildStandardNotificationContent:arguments result:result];
-  
+
   // Check if there are any constraints (daysOfWeek, startTime, endTime)
   NSArray *daysOfWeek = arguments[DAYS_OF_WEEK];
   NSString *startTime = arguments[START_TIME];
   NSString *endTime = arguments[END_TIME];
   NSString *customRepeatInterval = arguments[CUSTOM_REPEAT_INTERVAL];
   NSNumber *repeatMinutes = arguments[REPEAT_MINUTES];
-  
+
   BOOL hasConstraints = NO;
-  
+
   // Check if daysOfWeek constraint is active (not all days)
   if (daysOfWeek != nil && [daysOfWeek count] < 7) {
     hasConstraints = YES;
   }
-  
+
   // Check if time range constraint is active (not full day)
-  if (startTime != nil && endTime != nil && 
-      (![startTime isEqualToString:@"00:00"] || ![endTime isEqualToString:@"23:59"])) {
+  if (startTime != nil && endTime != nil &&
+      (![startTime isEqualToString:@"00:00"] ||
+       ![endTime isEqualToString:@"23:59"])) {
     hasConstraints = YES;
   }
-  
+
   // Check if custom repeat interval is used
   if (customRepeatInterval != nil) {
     hasConstraints = YES;
   }
-  
+
   if (hasConstraints) {
     // For constrained scheduling, calculate the next valid trigger time
     NSNumber *calledAt = arguments[CALLED_AT];
     NSTimeInterval initialTriggerTime;
-    
+
     if (calledAt != nil) {
-      initialTriggerTime = [calledAt doubleValue] / 1000.0; // Convert milliseconds to seconds
+      initialTriggerTime =
+          [calledAt doubleValue] / 1000.0; // Convert milliseconds to seconds
     } else {
       initialTriggerTime = [[NSDate date] timeIntervalSince1970];
     }
-    
+
     // Calculate repeat interval
-    NSTimeInterval repeatInterval = [FlutterLocalNotificationsPlugin calculateRepeatIntervalSeconds:arguments];
-    
-    // Calculate the next valid notification trigger time considering all constraints
-    NSTimeInterval nextTriggerTime = [FlutterLocalNotificationsPlugin 
-                                      calculateNextNotificationTrigger:initialTriggerTime
-                                      repeatInterval:repeatInterval
-                                      arguments:arguments];
-    
+    NSTimeInterval repeatInterval = [FlutterLocalNotificationsPlugin
+        calculateRepeatIntervalSeconds:arguments];
+
+    // Calculate the next valid notification trigger time considering all
+    // constraints
+    NSTimeInterval nextTriggerTime = [FlutterLocalNotificationsPlugin
+        calculateNextNotificationTrigger:initialTriggerTime
+                          repeatInterval:repeatInterval
+                               arguments:arguments];
+
     // Calculate time interval from now to the next trigger
     NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
     NSTimeInterval timeInterval = nextTriggerTime - currentTime;
-    
+
     // Ensure the time interval is positive and at least 1 second
     if (timeInterval < 1) {
       timeInterval = 1;
     }
-    
+
     // For iOS, we'll use repeating trigger with the calculated interval
     // Note: This is a best-effort approach. iOS doesn't support the same
     // level of constraint-based scheduling as Android's AlarmManager
     UNTimeIntervalNotificationTrigger *trigger =
         [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:timeInterval
-                                                            repeats:YES];
-    
+                                                           repeats:YES];
+
     [self addNotificationRequest:[self getIdentifier:arguments]
                          content:content
                           result:result
                          trigger:trigger];
   } else {
-    // For simple repeating notifications without constraints, use the standard approach
+    // For simple repeating notifications without constraints, use the standard
+    // approach
     UNTimeIntervalNotificationTrigger *trigger =
         [self buildUserNotificationTimeIntervalTrigger:arguments];
     [self addNotificationRequest:[self getIdentifier:arguments]
@@ -921,46 +926,47 @@ static FlutterError *getFlutterError(NSError *error) {
   if (daysOfWeek == nil || [daysOfWeek count] == 0) {
     return YES;
   }
-  
+
   NSDate *date = [NSDate dateWithTimeIntervalSince1970:notificationTriggerTime];
   NSCalendar *calendar = [NSCalendar currentCalendar];
   NSInteger weekday = [calendar component:NSCalendarUnitWeekday fromDate:date];
-  
+
   for (NSNumber *day in daysOfWeek) {
     if ([day integerValue] == weekday) {
       return YES;
     }
   }
-  
+
   return NO;
 }
 
 + (BOOL)isOnValidInterval:(NSTimeInterval)notificationTriggerTime
-            startTimeString:(NSString *)startTimeString
-              endTimeString:(NSString *)endTimeString {
+          startTimeString:(NSString *)startTimeString
+            endTimeString:(NSString *)endTimeString {
   if (startTimeString == nil || endTimeString == nil) {
     return YES;
   }
-  
+
   NSDate *date = [NSDate dateWithTimeIntervalSince1970:notificationTriggerTime];
   NSCalendar *calendar = [NSCalendar currentCalendar];
-  NSDateComponents *timeComponents = [calendar components:(NSCalendarUnitHour | NSCalendarUnitMinute)
-                                                 fromDate:date];
-  
+  NSDateComponents *timeComponents =
+      [calendar components:(NSCalendarUnitHour | NSCalendarUnitMinute)
+                  fromDate:date];
+
   // Parse start time (format: "HH:mm")
   NSArray *startParts = [startTimeString componentsSeparatedByString:@":"];
   NSInteger startHour = [[startParts objectAtIndex:0] integerValue];
   NSInteger startMinute = [[startParts objectAtIndex:1] integerValue];
-  
+
   // Parse end time (format: "HH:mm")
   NSArray *endParts = [endTimeString componentsSeparatedByString:@":"];
   NSInteger endHour = [[endParts objectAtIndex:0] integerValue];
   NSInteger endMinute = [[endParts objectAtIndex:1] integerValue];
-  
+
   NSInteger triggerMinutes = timeComponents.hour * 60 + timeComponents.minute;
   NSInteger startMinutes = startHour * 60 + startMinute;
   NSInteger endMinutes = endHour * 60 + endMinute;
-  
+
   if (endMinutes >= startMinutes) {
     // Same day interval (e.g., 08:00 to 20:00)
     return triggerMinutes >= startMinutes && triggerMinutes <= endMinutes;
@@ -970,33 +976,41 @@ static FlutterError *getFlutterError(NSError *error) {
   }
 }
 
-+ (NSTimeInterval)calculateNextNotificationTrigger:(NSTimeInterval)notificationTriggerTime
-                                    repeatInterval:(NSTimeInterval)repeatInterval
-                                        arguments:(NSDictionary *)arguments {
++ (NSTimeInterval)
+    calculateNextNotificationTrigger:(NSTimeInterval)notificationTriggerTime
+                      repeatInterval:(NSTimeInterval)repeatInterval
+                           arguments:(NSDictionary *)arguments {
   NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
   NSArray *daysOfWeek = arguments[DAYS_OF_WEEK];
   NSString *startTime = arguments[START_TIME];
   NSString *endTime = arguments[END_TIME];
   NSString *customRepeatInterval = arguments[CUSTOM_REPEAT_INTERVAL];
   NSNumber *repeatMinutes = arguments[REPEAT_MINUTES];
-  
+
   NSCalendar *calendar = [NSCalendar currentCalendar];
   NSDate *date = [NSDate dateWithTimeIntervalSince1970:notificationTriggerTime];
-  
+
   while (notificationTriggerTime < currentTime ||
-         ![self isOnValidWeekDay:notificationTriggerTime daysOfWeek:daysOfWeek] ||
-         ![self isOnValidInterval:notificationTriggerTime startTimeString:startTime endTimeString:endTime]) {
-    
+         ![self isOnValidWeekDay:notificationTriggerTime
+                      daysOfWeek:daysOfWeek] ||
+         ![self isOnValidInterval:notificationTriggerTime
+                  startTimeString:startTime
+                    endTimeString:endTime]) {
+
     if (customRepeatInterval != nil) {
       if ([customRepeatInterval isEqualToString:@"Annually"]) {
         NSDateComponents *components = [[NSDateComponents alloc] init];
         components.year = 1;
-        date = [calendar dateByAddingComponents:components toDate:date options:0];
+        date = [calendar dateByAddingComponents:components
+                                         toDate:date
+                                        options:0];
         notificationTriggerTime = [date timeIntervalSince1970];
       } else if ([customRepeatInterval isEqualToString:@"Monthly"]) {
         NSDateComponents *components = [[NSDateComponents alloc] init];
         components.month = 1;
-        date = [calendar dateByAddingComponents:components toDate:date options:0];
+        date = [calendar dateByAddingComponents:components
+                                         toDate:date
+                                        options:0];
         notificationTriggerTime = [date timeIntervalSince1970];
       } else {
         notificationTriggerTime += repeatInterval;
@@ -1007,45 +1021,46 @@ static FlutterError *getFlutterError(NSError *error) {
       date = [NSDate dateWithTimeIntervalSince1970:notificationTriggerTime];
     }
   }
-  
+
   return notificationTriggerTime;
 }
 
 + (NSTimeInterval)calculateRepeatIntervalSeconds:(NSDictionary *)arguments {
   NSTimeInterval repeatInterval = 0;
-  
+
   // Check if repeatMinutes parameter was provided
   NSNumber *repeatMinutes = arguments[REPEAT_MINUTES];
   if (repeatMinutes != nil) {
     repeatInterval = [repeatMinutes integerValue] * 60.0;
     return repeatInterval;
   }
-  
-  NSNumber *repeatIntervalMilliseconds = arguments[REPEAT_INTERVAL_MILLISECODNS];
+
+  NSNumber *repeatIntervalMilliseconds =
+      arguments[REPEAT_INTERVAL_MILLISECODNS];
   if (repeatIntervalMilliseconds != nil) {
     repeatInterval = [repeatIntervalMilliseconds doubleValue] / 1000.0;
     return repeatInterval;
   }
-  
+
   // Use standard repeat interval
   NSInteger repeatIntervalIndex = [arguments[REPEAT_INTERVAL] integerValue];
   switch (repeatIntervalIndex) {
-    case 0: // EveryMinute
-      repeatInterval = 60;
-      break;
-    case 1: // Hourly
-      repeatInterval = 60 * 60;
-      break;
-    case 2: // Daily
-      repeatInterval = 60 * 60 * 24;
-      break;
-    case 3: // Weekly
-      repeatInterval = 60 * 60 * 24 * 7;
-      break;
-    default:
-      break;
+  case 0: // EveryMinute
+    repeatInterval = 60;
+    break;
+  case 1: // Hourly
+    repeatInterval = 60 * 60;
+    break;
+  case 2: // Daily
+    repeatInterval = 60 * 60 * 24;
+    break;
+  case 3: // Weekly
+    repeatInterval = 60 * 60 * 24 * 7;
+    break;
+  default:
+    break;
   }
-  
+
   return repeatInterval;
 }
 
