@@ -40,6 +40,8 @@ NSString *const ON_NOTIFICATION_METHOD = @"onNotification";
 NSString *const DID_RECEIVE_LOCAL_NOTIFICATION = @"didReceiveLocalNotification";
 NSString *const REQUEST_PERMISSIONS_METHOD = @"requestPermissions";
 NSString *const CHECK_PERMISSIONS_METHOD = @"checkPermissions";
+NSString *const OPEN_APP_NOTIFICATION_SETTINGS_METHOD =
+    @"openAppNotificationSettings";
 
 NSString *const DAY = @"day";
 
@@ -49,6 +51,7 @@ NSString *const REQUEST_BADGE_PERMISSION = @"requestBadgePermission";
 NSString *const REQUEST_PROVISIONAL_PERMISSION =
     @"requestProvisionalPermission";
 NSString *const REQUEST_CRITICAL_PERMISSION = @"requestCriticalPermission";
+NSString *const REQUEST_CARPLAY_PERMISSION = @"requestCarPlayPermission";
 NSString *const REQUEST_PROVIDES_APP_NOTIFICATION_SETTINGS =
     @"requestProvidesAppNotificationSettings";
 NSString *const DEFAULT_PRESENT_ALERT = @"defaultPresentAlert";
@@ -61,6 +64,7 @@ NSString *const ALERT_PERMISSION = @"alert";
 NSString *const BADGE_PERMISSION = @"badge";
 NSString *const PROVISIONAL_PERMISSION = @"provisional";
 NSString *const CRITICAL_PERMISSION = @"critical";
+NSString *const CARPLAY_PERMISSION = @"carPlay";
 NSString *const PROVIDES_APP_NOTIFICATION_SETTINGS =
     @"providesAppNotificationSettings";
 NSString *const CALLBACK_DISPATCHER = @"callbackDispatcher";
@@ -103,6 +107,7 @@ NSString *const PAYLOAD = @"payload";
 NSString *const NOTIFICATION_LAUNCHED_APP = @"notificationLaunchedApp";
 NSString *const ACTION_ID = @"actionId";
 NSString *const NOTIFICATION_RESPONSE_TYPE = @"notificationResponseType";
+NSString *const DISMISS_ISOLATE = @"dismissIsolate";
 
 NSString *const UNSUPPORTED_OS_VERSION_ERROR_CODE = @"unsupported_os_version";
 NSString *const GET_ACTIVE_NOTIFICATIONS_ERROR_MESSAGE =
@@ -118,6 +123,7 @@ NSString *const IS_PROVISIONAL_ENABLED = @"isProvisionalEnabled";
 NSString *const IS_CRITICAL_ENABLED = @"isCriticalEnabled";
 NSString *const IS_PROVIDES_APP_NOTIFICATION_SETTINGS_ENABLED =
     @"isProvidesAppNotificationSettingsEnabled";
+NSString *const IS_CAR_PLAY_ENABLED = @"isCarPlayEnabled";
 
 NSString *const CRITICAL_SOUND_VOLUME = @"criticalSoundVolume";
 
@@ -195,6 +201,9 @@ static FlutterError *getFlutterError(NSError *error) {
     [self requestPermissions:call.arguments result:result];
   } else if ([CHECK_PERMISSIONS_METHOD isEqualToString:call.method]) {
     [self checkPermissions:call.arguments result:result];
+  } else if ([OPEN_APP_NOTIFICATION_SETTINGS_METHOD
+                 isEqualToString:call.method]) {
+    [self openAppNotificationSettings:result];
   } else if ([CANCEL_METHOD isEqualToString:call.method]) {
     [self cancel:((NSNumber *)call.arguments) result:result];
   } else if ([CANCEL_ALL_METHOD isEqualToString:call.method]) {
@@ -220,6 +229,53 @@ static FlutterError *getFlutterError(NSError *error) {
   } else {
     result(FlutterMethodNotImplemented);
   }
+}
+
+- (void)openAppNotificationSettings:(FlutterResult _Nonnull)result {
+  // Best-effort: open this app's notification settings in the Settings app.
+  // On iOS 15.4+, UIApplicationOpenNotificationSettingsURLString deep links to
+  // the app's Notifications page. If that fails or is unavailable, fall back
+  // to UIApplicationOpenSettingsURLString (this app's page in Settings).
+  // Fallback is based on openURL reporting failure, not canOpenURL.
+  // Note: even on supported versions, the destination screen may vary by
+  // OS/device configuration.
+  dispatch_async(dispatch_get_main_queue(), ^{
+    UIApplication *application = [UIApplication sharedApplication];
+
+    void (^openAppSettings)(void) = ^{
+      NSURL *settingsUrl =
+          [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+      if (settingsUrl == nil) {
+        result(@(NO));
+        return;
+      }
+
+      [application openURL:settingsUrl
+          options:@{}
+          completionHandler:^(BOOL success) {
+            result(@(success));
+          }];
+    };
+
+    if (@available(iOS 15.4, *)) {
+      NSURL *notificationSettingsUrl =
+          [NSURL URLWithString:UIApplicationOpenNotificationSettingsURLString];
+      if (notificationSettingsUrl != nil) {
+        [application openURL:notificationSettingsUrl
+            options:@{}
+            completionHandler:^(BOOL success) {
+              if (success) {
+                result(@(YES));
+              } else {
+                openAppSettings();
+              }
+            }];
+        return;
+      }
+    }
+
+    openAppSettings();
+  });
 }
 
 - (void)pendingNotificationRequests:(FlutterResult _Nonnull)result
@@ -346,6 +402,11 @@ static FlutterError *getFlutterError(NSError *error) {
         activeNotification[PAYLOAD] =
             notification.request.content.userInfo[PAYLOAD];
       }
+      if (notification.request.content.threadIdentifier != nil &&
+          notification.request.content.threadIdentifier.length > 0) {
+        activeNotification[@"groupKey"] =
+            notification.request.content.threadIdentifier;
+      }
       [activeNotifications addObject:activeNotification];
     }
     result(activeNotifications);
@@ -359,6 +420,7 @@ static FlutterError *getFlutterError(NSError *error) {
   bool requestedBadgePermission = false;
   bool requestedProvisionalPermission = false;
   bool requestedCriticalPermission = false;
+  bool requestedCarPlayPermission = false;
   bool requestedProvidesAppNotificationSettings = false;
   NSMutableDictionary *presentationOptions = [[NSMutableDictionary alloc] init];
   if ([self containsKey:DEFAULT_PRESENT_ALERT forDictionary:arguments]) {
@@ -407,6 +469,10 @@ static FlutterError *getFlutterError(NSError *error) {
     requestedCriticalPermission =
         [arguments[REQUEST_CRITICAL_PERMISSION] boolValue];
   }
+  if ([self containsKey:REQUEST_CARPLAY_PERMISSION forDictionary:arguments]) {
+    requestedCarPlayPermission =
+        [arguments[REQUEST_CARPLAY_PERMISSION] boolValue];
+  }
   if ([self containsKey:REQUEST_PROVIDES_APP_NOTIFICATION_SETTINGS
           forDictionary:arguments]) {
     requestedProvidesAppNotificationSettings =
@@ -421,21 +487,23 @@ static FlutterError *getFlutterError(NSError *error) {
   }
 
   // Configure the notification categories before requesting permissions
-  [self configureNotificationCategories:arguments
-                  withCompletionHandler:^{
-                    // Once notification categories are set up, the permissions
-                    // request will pick them up properly.
-                    [self requestPermissionsImpl:requestedSoundPermission
-                                        alertPermission:requestedAlertPermission
-                                        badgePermission:requestedBadgePermission
-                                  provisionalPermission:
-                                      requestedProvisionalPermission
-                                     criticalPermission:
-                                         requestedCriticalPermission
-                        providesAppNotificationSettings:
-                            requestedProvidesAppNotificationSettings
-                                                 result:result];
-                  }];
+  [self
+      configureNotificationCategories:arguments
+                withCompletionHandler:^{
+                  // Once notification categories are set up, the permissions
+                  // request will pick them up properly.
+                  [self requestPermissionsImpl:requestedSoundPermission
+                                      alertPermission:requestedAlertPermission
+                                      badgePermission:requestedBadgePermission
+                                provisionalPermission:
+                                    requestedProvisionalPermission
+                                   criticalPermission:
+                                       requestedCriticalPermission
+                                    carPlayPermission:requestedCarPlayPermission
+                      providesAppNotificationSettings:
+                          requestedProvidesAppNotificationSettings
+                                               result:result];
+                }];
 
   _initialized = true;
 }
@@ -446,6 +514,7 @@ static FlutterError *getFlutterError(NSError *error) {
   bool badgePermission = false;
   bool provisionalPermission = false;
   bool criticalPermission = false;
+  bool requestCarPlayPermission = false;
   bool providesAppNotificationSettings = false;
   if ([self containsKey:SOUND_PERMISSION forDictionary:arguments]) {
     soundPermission = [arguments[SOUND_PERMISSION] boolValue];
@@ -462,6 +531,9 @@ static FlutterError *getFlutterError(NSError *error) {
   if ([self containsKey:CRITICAL_PERMISSION forDictionary:arguments]) {
     criticalPermission = [arguments[CRITICAL_PERMISSION] boolValue];
   }
+  if ([self containsKey:CARPLAY_PERMISSION forDictionary:arguments]) {
+    requestCarPlayPermission = [arguments[CARPLAY_PERMISSION] boolValue];
+  }
   if ([self containsKey:PROVIDES_APP_NOTIFICATION_SETTINGS
           forDictionary:arguments]) {
     providesAppNotificationSettings =
@@ -472,6 +544,7 @@ static FlutterError *getFlutterError(NSError *error) {
                       badgePermission:badgePermission
                 provisionalPermission:provisionalPermission
                    criticalPermission:criticalPermission
+                    carPlayPermission:requestCarPlayPermission
       providesAppNotificationSettings:providesAppNotificationSettings
                                result:result];
 }
@@ -481,6 +554,7 @@ static FlutterError *getFlutterError(NSError *error) {
                     badgePermission:(bool)badgePermission
               provisionalPermission:(bool)provisionalPermission
                  criticalPermission:(bool)criticalPermission
+                  carPlayPermission:(bool)carPlayPermission
     providesAppNotificationSettings:(bool)providesAppNotificationSettings
                              result:(FlutterResult _Nonnull)result {
   if (!soundPermission && !alertPermission && !badgePermission &&
@@ -500,6 +574,11 @@ static FlutterError *getFlutterError(NSError *error) {
   }
   if (badgePermission) {
     authorizationOptions += UNAuthorizationOptionBadge;
+  }
+  if (@available(iOS 10.0, *)) {
+    if (carPlayPermission) {
+      authorizationOptions += UNAuthorizationOptionCarPlay;
+    }
   }
   if (@available(iOS 12.0, *)) {
     if (provisionalPermission) {
@@ -536,6 +615,7 @@ static FlutterError *getFlutterError(NSError *error) {
     BOOL isProvisionalEnabled = false;
     BOOL isCriticalEnabled = false;
     BOOL isProvidesAppNotificationSettingsEnabled = false;
+    BOOL isCarPlayEnabled = false;
 
     if (@available(iOS 12.0, *)) {
       isProvisionalEnabled =
@@ -544,6 +624,11 @@ static FlutterError *getFlutterError(NSError *error) {
           settings.criticalAlertSetting == UNNotificationSettingEnabled;
       isProvidesAppNotificationSettingsEnabled =
           settings.providesAppNotificationSettings;
+    }
+
+    if (@available(iOS 10.0, *)) {
+      isCarPlayEnabled =
+          settings.carPlaySetting == UNNotificationSettingEnabled;
     }
 
     NSDictionary *dict = @{
@@ -555,6 +640,7 @@ static FlutterError *getFlutterError(NSError *error) {
       IS_CRITICAL_ENABLED : @(isCriticalEnabled),
       IS_PROVIDES_APP_NOTIFICATION_SETTINGS_ENABLED :
           @(isProvidesAppNotificationSettingsEnabled),
+      IS_CAR_PLAY_ENABLED : @(isCarPlayEnabled),
     };
 
     result(dict);
@@ -845,14 +931,21 @@ static FlutterError *getFlutterError(NSError *error) {
   if (presentSound && content.sound == nil) {
     content.sound = UNNotificationSound.defaultSound;
   }
-  content.userInfo = [self buildUserDict:arguments[ID]
-                                   title:content.title
-                            presentAlert:presentAlert
-                            presentSound:presentSound
-                            presentBadge:presentBadge
-                           presentBanner:presentBanner
-                             presentList:presentList
-                                 payload:arguments[PAYLOAD]];
+  NSMutableDictionary *userDict = [self buildUserDict:arguments[ID]
+                                                title:content.title
+                                         presentAlert:presentAlert
+                                         presentSound:presentSound
+                                         presentBadge:presentBadge
+                                        presentBanner:presentBanner
+                                          presentList:presentList
+                                              payload:arguments[PAYLOAD]];
+  if (arguments[PLATFORM_SPECIFICS] != [NSNull null]) {
+    id dismissIsolate = arguments[PLATFORM_SPECIFICS][DISMISS_ISOLATE];
+    if (dismissIsolate != nil && dismissIsolate != [NSNull null]) {
+      userDict[DISMISS_ISOLATE] = dismissIsolate;
+    }
+  }
+  content.userInfo = userDict;
   return content;
 }
 
@@ -1129,7 +1222,10 @@ static FlutterError *getFlutterError(NSError *error) {
       [UNUserNotificationCenter currentNotificationCenter];
   [center addNotificationRequest:notificationRequest
            withCompletionHandler:^(NSError *_Nullable error) {
-             if (error == nil) {
+             // iOS 27 returns errors where earlier versions failed silently,
+             // such as when notifications aren't authorized, so errors in this
+             // domain are ignored
+             if (error == nil || [error.domain isEqualToString:UNErrorDomain]) {
                result(nil);
                return;
              }
@@ -1219,9 +1315,11 @@ static FlutterError *getFlutterError(NSError *error) {
           isEqualToString:UNNotificationDefaultActionIdentifier]) {
     notitificationResponseDict[NOTIFICATION_RESPONSE_TYPE] =
         [NSNumber numberWithInteger:0];
-  } else if (response.actionIdentifier != nil &&
-             ![response.actionIdentifier
+  } else if ([response.actionIdentifier
                  isEqualToString:UNNotificationDismissActionIdentifier]) {
+    notitificationResponseDict[NOTIFICATION_RESPONSE_TYPE] =
+        [NSNumber numberWithInteger:2];
+  } else if (response.actionIdentifier != nil) {
     notitificationResponseDict[ACTION_ID] = response.actionIdentifier;
     notitificationResponseDict[NOTIFICATION_RESPONSE_TYPE] =
         [NSNumber numberWithInteger:1];
@@ -1256,6 +1354,28 @@ static FlutterError *getFlutterError(NSError *error) {
       _launchNotificationResponseDict =
           [self extractNotificationResponseDict:response];
       _launchingAppFromNotification = true;
+    }
+    completionHandler();
+  } else if ([response.actionIdentifier
+                 isEqualToString:UNNotificationDismissActionIdentifier]) {
+    id dismissIsolate =
+        response.notification.request.content.userInfo[DISMISS_ISOLATE];
+    if (dismissIsolate != nil && dismissIsolate != [NSNull null]) {
+      NSMutableDictionary *notificationResponseDict =
+          [self extractNotificationResponseDict:response];
+      if ([dismissIsolate integerValue] == 0) {
+        if (_initialized) {
+          [_channel invokeMethod:@"didReceiveNotificationResponse"
+                       arguments:notificationResponseDict];
+        }
+      } else {
+        if (!actionEventSink) {
+          actionEventSink = [[ActionEventSink alloc] init];
+        }
+        [actionEventSink addItem:notificationResponseDict];
+        [_flutterEngineManager startEngineIfNeeded:actionEventSink
+                                   registerPlugins:registerPlugins];
+      }
     }
     completionHandler();
   } else if (response.actionIdentifier != nil) {

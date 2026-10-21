@@ -12,6 +12,9 @@ import com.dexterous.flutterlocalnotifications.models.styles.BigTextStyleInforma
 import com.dexterous.flutterlocalnotifications.models.styles.DefaultStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.InboxStyleInformation;
 import com.dexterous.flutterlocalnotifications.models.styles.MessagingStyleInformation;
+import com.dexterous.flutterlocalnotifications.models.styles.ProgressStyleInformation;
+import com.dexterous.flutterlocalnotifications.models.styles.ProgressStylePoint;
+import com.dexterous.flutterlocalnotifications.models.styles.ProgressStyleSegment;
 import com.dexterous.flutterlocalnotifications.models.styles.StyleInformation;
 import com.dexterous.flutterlocalnotifications.utils.LongUtils;
 import com.google.gson.annotations.SerializedName;
@@ -40,6 +43,8 @@ public class NotificationDetails implements Serializable {
   private static final String PLATFORM_SPECIFICS = "platformSpecifics";
   private static final String AUTO_CANCEL = "autoCancel";
   private static final String ONGOING = "ongoing";
+  private static final String REQUEST_PROMOTED_ONGOING = "requestPromotedOngoing";
+  private static final String SHORT_CRITICAL_TEXT = "shortCriticalText";
   private static final String SILENT = "silent";
   private static final String STYLE = "style";
   private static final String ICON = "icon";
@@ -81,10 +86,23 @@ public class NotificationDetails implements Serializable {
   private static final String BIG_PICTURE = "bigPicture";
   private static final String BIG_PICTURE_BITMAP_SOURCE = "bigPictureBitmapSource";
   private static final String HIDE_EXPANDED_LARGE_ICON = "hideExpandedLargeIcon";
+  private static final String SHOW_BIG_PICTURE_WHEN_COLLAPSED = "showBigPictureWhenCollapsed";
   private static final String SHOW_PROGRESS = "showProgress";
   private static final String MAX_PROGRESS = "maxProgress";
   private static final String PROGRESS = "progress";
   private static final String INDETERMINATE = "indeterminate";
+  private static final String PROGRESS_INDETERMINATE = "progressIndeterminate";
+  private static final String STYLED_BY_PROGRESS = "styledByProgress";
+  private static final String SEGMENTS = "segments";
+  private static final String POINTS = "points";
+  private static final String LENGTH = "length";
+  private static final String POSITION = "position";
+  private static final String ELEMENT_ID = "id";
+  private static final String SEMANTIC_STYLE = "semanticStyle";
+  private static final String PROGRESS_TRACKER_ICON = "progressTrackerIcon";
+  private static final String PROGRESS_START_ICON = "progressStartIcon";
+  private static final String PROGRESS_END_ICON = "progressEndIcon";
+  private static final String ICON_SOURCE_SUFFIX = "Source";
   private static final String PERSON = "person";
   private static final String CONVERSATION_TITLE = "conversationTitle";
   private static final String GROUP_CONVERSATION = "groupConversation";
@@ -127,6 +145,7 @@ public class NotificationDetails implements Serializable {
   private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
 
   private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
+  private static final String DISMISS_ISOLATE = "dismissIsolate";
   private static final String SHORTCUT_ID = "shortcutId";
   private static final String SUB_TEXT = "subText";
   private static final String ACTIONS = "actions";
@@ -168,6 +187,8 @@ public class NotificationDetails implements Serializable {
   public Integer groupAlertBehavior;
   public Boolean autoCancel;
   public Boolean ongoing;
+  public Boolean requestPromotedOngoing;
+  public String shortCriticalText;
   public Boolean silent;
   public Integer day;
   public Integer color;
@@ -201,6 +222,7 @@ public class NotificationDetails implements Serializable {
   public DateTimeComponents matchDateTimeComponents;
   public Long when;
   public Boolean fullScreenIntent;
+  public Integer dismissIsolate;
   public String shortcutId;
   public String subText;
   public @Nullable List<NotificationAction> actions;
@@ -281,6 +303,10 @@ public class NotificationDetails implements Serializable {
     if (platformChannelSpecifics != null) {
       notificationDetails.autoCancel = (Boolean) platformChannelSpecifics.get(AUTO_CANCEL);
       notificationDetails.ongoing = (Boolean) platformChannelSpecifics.get(ONGOING);
+      notificationDetails.requestPromotedOngoing =
+          (Boolean) platformChannelSpecifics.get(REQUEST_PROMOTED_ONGOING);
+      notificationDetails.shortCriticalText =
+          (String) platformChannelSpecifics.get(SHORT_CRITICAL_TEXT);
       notificationDetails.silent = (Boolean) platformChannelSpecifics.get(SILENT);
       notificationDetails.style =
           NotificationStyle.values()[(Integer) platformChannelSpecifics.get(STYLE)];
@@ -316,6 +342,7 @@ public class NotificationDetails implements Serializable {
       notificationDetails.category = (String) platformChannelSpecifics.get(CATEGORY);
       notificationDetails.fullScreenIntent =
           (Boolean) platformChannelSpecifics.get((FULL_SCREEN_INTENT));
+      notificationDetails.dismissIsolate = (Integer) platformChannelSpecifics.get(DISMISS_ISOLATE);
       notificationDetails.shortcutId = (String) platformChannelSpecifics.get(SHORTCUT_ID);
       notificationDetails.additionalFlags = (int[]) platformChannelSpecifics.get(ADDITIONAL_FLAGS);
       notificationDetails.subText = (String) platformChannelSpecifics.get(SUB_TEXT);
@@ -448,7 +475,86 @@ public class NotificationDetails implements Serializable {
       readMessagingStyleInformation(notificationDetails, styleInformation, defaultStyleInformation);
     } else if (notificationDetails.style == NotificationStyle.Media) {
       notificationDetails.styleInformation = defaultStyleInformation;
+    } else if (notificationDetails.style == NotificationStyle.Progress) {
+      readProgressStyleInformation(notificationDetails, styleInformation, defaultStyleInformation);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void readProgressStyleInformation(
+      NotificationDetails notificationDetails,
+      Map<String, Object> styleInformation,
+      DefaultStyleInformation defaultStyleInformation) {
+    Integer progress = (Integer) styleInformation.get(PROGRESS);
+    Boolean progressIndeterminate = (Boolean) styleInformation.get(PROGRESS_INDETERMINATE);
+    Boolean styledByProgress = (Boolean) styleInformation.get(STYLED_BY_PROGRESS);
+    ArrayList<ProgressStyleSegment> segments =
+        readProgressSegments((ArrayList<Map<String, Object>>) styleInformation.get(SEGMENTS));
+    ArrayList<ProgressStylePoint> points =
+        readProgressPoints((ArrayList<Map<String, Object>>) styleInformation.get(POINTS));
+    notificationDetails.styleInformation =
+        new ProgressStyleInformation(
+            defaultStyleInformation.htmlFormatTitle,
+            defaultStyleInformation.htmlFormatBody,
+            progress,
+            progressIndeterminate,
+            styledByProgress,
+            segments,
+            points,
+            styleInformation.get(PROGRESS_TRACKER_ICON),
+            readIconSource(styleInformation, PROGRESS_TRACKER_ICON),
+            styleInformation.get(PROGRESS_START_ICON),
+            readIconSource(styleInformation, PROGRESS_START_ICON),
+            styleInformation.get(PROGRESS_END_ICON),
+            readIconSource(styleInformation, PROGRESS_END_ICON));
+  }
+
+  private static IconSource readIconSource(Map<String, Object> map, String key) {
+    Integer index = (Integer) map.get(key + ICON_SOURCE_SUFFIX);
+    return index == null ? null : IconSource.values()[index];
+  }
+
+  private static ArrayList<ProgressStyleSegment> readProgressSegments(
+      ArrayList<Map<String, Object>> segments) {
+    ArrayList<ProgressStyleSegment> result = new ArrayList<>();
+    if (segments != null) {
+      for (Map<String, Object> segment : segments) {
+        result.add(
+            new ProgressStyleSegment(
+                (Integer) segment.get(LENGTH),
+                (Integer) segment.get(ELEMENT_ID),
+                readColor(segment),
+                (Integer) segment.get(SEMANTIC_STYLE)));
+      }
+    }
+    return result;
+  }
+
+  private static ArrayList<ProgressStylePoint> readProgressPoints(
+      ArrayList<Map<String, Object>> points) {
+    ArrayList<ProgressStylePoint> result = new ArrayList<>();
+    if (points != null) {
+      for (Map<String, Object> point : points) {
+        result.add(
+            new ProgressStylePoint(
+                (Integer) point.get(POSITION),
+                (Integer) point.get(ELEMENT_ID),
+                readColor(point),
+                (Integer) point.get(SEMANTIC_STYLE)));
+      }
+    }
+    return result;
+  }
+
+  private static Integer readColor(Map<String, Object> map) {
+    Integer a = (Integer) map.get(COLOR_ALPHA);
+    Integer r = (Integer) map.get(COLOR_RED);
+    Integer g = (Integer) map.get(COLOR_GREEN);
+    Integer b = (Integer) map.get(COLOR_BLUE);
+    if (a != null && r != null && g != null && b != null) {
+      return Color.argb(a, r, g, b);
+    }
+    return null;
   }
 
   @SuppressWarnings("unchecked")
@@ -568,6 +674,8 @@ public class NotificationDetails implements Serializable {
         (Integer) styleInformation.get(BIG_PICTURE_BITMAP_SOURCE);
     BitmapSource bigPictureBitmapSource = BitmapSource.values()[bigPictureBitmapSourceArgument];
     Boolean showThumbnail = (Boolean) styleInformation.get(HIDE_EXPANDED_LARGE_ICON);
+    Boolean showBigPictureWhenCollapsed =
+        (Boolean) styleInformation.get(SHOW_BIG_PICTURE_WHEN_COLLAPSED);
     notificationDetails.styleInformation =
         new BigPictureStyleInformation(
             defaultStyleInformation.htmlFormatTitle,
@@ -580,7 +688,8 @@ public class NotificationDetails implements Serializable {
             largeIconBitmapSource,
             bigPicture,
             bigPictureBitmapSource,
-            showThumbnail);
+            showThumbnail,
+            showBigPictureWhenCollapsed);
   }
 
   private static DefaultStyleInformation getDefaultStyleInformation(

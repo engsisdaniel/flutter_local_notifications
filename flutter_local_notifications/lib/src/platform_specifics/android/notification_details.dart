@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
+import '../../types.dart';
 import 'bitmap.dart';
 import 'enums.dart';
 import 'notification_sound.dart';
@@ -125,6 +126,8 @@ class AndroidNotificationDetails {
     this.groupAlertBehavior = GroupAlertBehavior.all,
     this.autoCancel = true,
     this.ongoing = false,
+    this.requestPromotedOngoing = false,
+    this.shortCriticalText,
     this.silent = false,
     this.color,
     this.largeIcon,
@@ -156,6 +159,7 @@ class AndroidNotificationDetails {
     this.colorized = false,
     this.number,
     this.audioAttributesUsage = AudioAttributesUsage.notification,
+    this.dismissIsolate,
   });
 
   /// The icon that should be used when displaying the notification.
@@ -258,6 +262,25 @@ class AndroidNotificationDetails {
 
   /// Specifies if the notification will be "ongoing".
   final bool ongoing;
+
+  /// Requests that an [ongoing] notification be promoted to a "Live Update".
+  ///
+  /// On Android 16 and newer, a promoted ongoing notification is given
+  /// elevated placement in the status bar and notification shade. It has no
+  /// effect unless [ongoing] is also `true`, and is ignored on older versions
+  /// of Android.
+  ///
+  /// See https://developer.android.com/develop/ui/views/notifications/live-update
+  /// for the requirements a notification must meet to be promoted.
+  final bool requestPromotedOngoing;
+
+  /// Short text shown in the status bar chip of a promoted "Live Update".
+  ///
+  /// On Android 16 and newer, this conveys the most important piece of state
+  /// at a glance, e.g. `"3 min"` or `"2.1 mi"`. Around seven characters are
+  /// shown. It only has an effect when the notification is promoted (see
+  /// [requestPromotedOngoing]) and is ignored on older versions of Android.
+  final String? shortCriticalText;
 
   /// Specifies if the notification will be "silent".
   final bool silent;
@@ -426,4 +449,13 @@ class AndroidNotificationDetails {
   /// such as alarm or ringtone set in [`AudioAttributes.Builder`](https://developer.android.com/reference/android/media/AudioAttributes.Builder#setUsage(int)).
   /// https://developer.android.com/reference/android/media/AudioAttributes
   final AudioAttributesUsage audioAttributesUsage;
+
+  /// The isolate a dismissal is reported on, or `null` to not report it.
+  ///
+  /// When set, swiping the notification away triggers a [NotificationResponse]
+  /// of type [NotificationResponseType.notificationDismissed] on that isolate.
+  /// [NotificationDismissedIsolate.background] fires even when the app has been
+  /// terminated; [NotificationDismissedIsolate.main] fires only while it runs.
+  /// Dismissing via a tap or `cancel` is never reported.
+  final NotificationDismissedIsolate? dismissIsolate;
 }

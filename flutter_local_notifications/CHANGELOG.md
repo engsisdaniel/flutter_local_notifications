@@ -1,7 +1,110 @@
-## [20.0.0-dev.1]
+## [23.0.0-dev.4]
+
+* Applies changes done as part of 22.3.2 hotfix
+
+## [23.0.0-dev.3]
+
+* [Windows] **Breaking change** bumped cmake minimum version to 3.14 and have plugin compile with at least C++ 20 (i.e. `CXX_STANDARD 20`)
+* [Windows] Properly fixed issue [#2777](https://github.com/MaikuB/flutter_local_notifications/issues/2777) to ensure future MSVC toolchain compatibility through code changes. The previous fix was done by suppressing a warning. Thanks to [Dragonloverlord](https://github.com/dragonloverlord) for sharing how it could be solved
+* [Android] plugin now explicitly specifies [background activity launches](https://developer.android.com/guide/components/activities/secure-bal) are [denied](https://developer.android.com/reference/android/app/ActivityOptions#MODE_BACKGROUND_ACTIVITY_START_DENIED) on Android 14+. Notifications are still expected to still work as before and have not found any breaking changes from testing. If any developers happen to find issues related to this change then create a bug report [here](https://github.com/MaikuB/flutter_local_notifications/issues/). Thanks to the PR from [Luca-CZ](https://github.com/Luca-CZ)
+
+## [23.0.0-dev.2]
+
+* [Android] added support for [live update notifications](https://developer.android.com/develop/ui/compose/notifications/live-update). Example app has been updated to demonstrate usage. Thanks to the PR from [Vasily Laushkin](https://github.com/vlaushkin)
+* [Linux] bumped allowed `dbus` dependency version constraints to `>=0.7.8 <0.9.0`
+* Updated readme to guidance on handling `PlatformException` being thrown when trying to show notifications when permissions have not been granted due to iOS 27 behavioural changes outside the control of the plugin
+
+## [23.0.0-dev.1]
+
+* **Breaking change** bumped minimum Flutter SDK requirement to 3.44.0 and Dart SDK requirement to 3.12.0
+* [Android] **Breaking change** bumped `compileSdk` to 37 and updated readme to mention this
+* [Android] **Breaking change** bumped to AGP 9.1.1
+* [Android] migrated to Kotlin DSL
+* [Android] Fixed a `NullPointerException` crash in `setSmallIcon` (`Attempt to invoke virtual method 'int java.lang.Integer.intValue()' on a null object reference`) when a scheduled notification is delivered with no `icon`, no persisted default icon, and a null legacy `iconResourceId`. This can happen when a notification serialized by an older version of the plugin fires after an app update. The application's own icon is now used as a fallback so notification delivery no longer crashes. Fixes [#298](https://github.com/MaikuB/flutter_local_notifications/issues/298) and [#2049](https://github.com/MaikuB/flutter_local_notifications/issues/2049). Thanks to the PR from [Michael Allen](https://github.com/mtallenca)
+* Migrated example app off the Kotlin Gradle Plugin (KGP) in favour of [built-in Kotlin](https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin) and bumped Android Gradle Plugin (AGP) to 9.1.1
+
+## [22.3.2]
+
+* [iOS] fixed issue [#2838](https://github.com/MaikuB/flutter_local_notifications/issues/2838) so that plugin longer throws `PlatformException`s that started on iOS 27 when permissions were not granted and when badge only notifications were triggered. This restores the behaviour of the plugin to as it was before. Thanks to the PR from [Vasily Laushkin](https://github.com/vlaushkin)
+* [Linux] bumped allowed `dbus` dependency version constraints to `>=0.7.8 <0.9.0`
+
+## [22.3.1]
+
+* [macOS] fixed subtitle not showing up properly. Thanks to the PR from [Soi (Jiwon Lee)](https://github.com/JIWON1923)
+
+## [22.3.0]
+
+* [Android][iOS][macOS] added `openAppNotificationSettings()` method. This opens the system settings UI where the user can manage notification permissions for the app. When not possible, on iOS, it opens the application's settings on iOS and on macOS, it opens the system settings notification pane. Thanks to the PR from [hamadcc](https://github.com/hamadcc)
+
+## [22.2.0]
+
+* [Android][iOS][macOS] added support for callbacks to fire when a notification has been dismissed. This requires opting in by where the key requirements is to make use of the `dismissIsolate` property added to the `AndroidNotificationDetails` and `DarwinNotificationDetails` class. This indicates which isolate should be used to handle when a notification has been dismissed. Note on macOS, there is no support for background isolates so callback will always fire on the main isolate despite what is specified. Please see example app for more details on how to set up handling dismissals. Thanks to the PR from from [Vasily Laushkin](https://github.com/vlaushkin)
+* [iOS] fixed issue [#2807](https://github.com/MaikuB/flutter_local_notifications/issues/2807) where the manifest for SPM incorrectly declared the minimum iOS version is 11 when it should have been 13. Thanks to the PR from [Bizzwell](https://github.com/Bizzwell)
+
+## [22.1.0]
+
+* [Android] added support for `showBigPictureWhenCollapsed` in `BigPictureStyleInformation`. Thanks to the PR from [hiimax (Codematic)](https://github.com/hiimax)
+* [iOS][macOS] improved SPM compatibility
+* Migrated example app to use SPM and removed Cocoapods integration
+* Fixed API docs of `NotificationResponseType.selectedNotificationAction`. Thanks to the PR from [fush1m1](https://github.com/Fush1m1)
+
+## [22.0.1]
+
+* [Windows] Suppress warning around usage of experimental coroutines. This is to fix issue [#2777](https://github.com/MaikuB/flutter_local_notifications/issues/2777)
+
+## [22.0.0]
+
+* [Android] calling the `requestNotificationPolicyAccess()` method belonging to the `AndroidFlutterLocalNotificationsPlugin` class will now highlight associated application. Thanks to the PR from [Claudius Kienle](https://github.com/claudius-kienle)
+* [Web] added web platform support. Thanks to the initial PR from [Levi Lesches](https://github.com/Levi-Lesches) and completion by [Gaurav](https://github.com/Gaurav-CareMonitor)
+* [Windows] when calling `periodicallyShow()` the message when the `UnsupportedError` is thrown has been updated to say `Windows devices cannot periodically show notifications` instead. This has happened as a result of shifting the responsibility of reporting the `UnsupportedError` so it is done by `flutter_local_notifications_windows` instead of `flutter_local_notifications`
+* [Windows] bumped `xml` dependency so that supported range is `>=6.5.0 <8.0.0`
+* Fixed missing code formatting in the Notification Actions configuration section. Thanks to the PR from [Matias de Andrea](https://github.com/deandreamatias)
+
+## [21.0.0]
+
+* **Breaking change** bumped minimum Flutter SDK requirement to 3.38.1 and Dart SDK requirement to 3.10.0. Consequently the minimum OS requirements for each platform has been updated as well
+  * [Android] minimum Android version is now 7.0 (API level 24)
+  * [iOS] minimum iOS version is now 13
+  * [macOS] minimum macOS version is now 10.15
+* Bumped `timezone` dependency
+* [Android] **Breaking change** bumped `compileSdk` to 36 and updated readme to mention this
+* [Android] bumped Android Gradle Plugin (AGP) to 8.11.1 
+* Migrated example app to `UIScene` lifecycle
+* Updated readme to specify changes needed for applications that have migrated to `UIScene` lifecycle
+* Updated iOS-specific setup around registering `UNUserNotificationCenterDelegate` to remove redundant `available` check and to be more specific that it should be done in the `application:didFinishLaunchingWithOptions:` method
+* Bumped `flutter_timezone` dependency in example app
+
+## [20.1.0]
+
+* [iOS] added CarPlay notification support. Thanks to the PR from [derrik f](https://github.com/derrik-fleming)
+* [iOS][macOS] the `ActiveNotification` class now returns values for `groupKey` property if applicable. This depends on if the `threadIdentifier` was specified when creating the notification itself. Thanks to the PR from [Kwon Tae Hyung](https://github.com/TaeBbong)
+* [Windows] non-functional change: addressed the [`use_null_aware_elements`](https://dart.dev/tools/diagnostics/use_null_aware_elements) linter issue
+
+## [20.0.0]
 
 * **Breaking change** bumped minimum Flutter SDK requirement to 3.32.0 and Dart SDK requirement to 3.8.0
+* **Breaking changes** the positional parameters in the following methods have now been converted to named parameters across all platforms. Thanks to the PR started by [Kwon Tae Hyung](https://github.com/TaeBbong)
+  * `initialize()`
+  * `show()`
+  * `periodicallyShow()`
+  * `periodicallyShowWithDuration()`
+  * `cancel()`
+  * `zonedSchedule()`
+* [Android] **Breaking changes** the positional parameters in the following methods have now been converted to named parameters
+  * `startForegroundService()`
+  * `deleteNotificationChannelGroup()`
+  * `deleteNotificationChannel()`
+  * `getActiveNotificationMessagingStyle()`
+* [Linux] **Breaking changes** the positional parameters in the `LinuxNotificationCustomHint()` method have now been converted to named parameters
+* [Windows] * **Breaking changes** the positional parameters in the following methods have now been converted to named parameters
+  * `showRawXml()`
+  * `zonedScheduleRawXml()`
+* [Windows] **Breaking changes** to align with the main the plugin, the following parameters have been renamed
+  * the `details` parameter in the `show()` and `zonedSchedule()` methods has been renamed to `notificationDetails`
+  * the `onNotificationReceived` in the `initialize()` method has been renamed to `onDidReceiveNotificationResponse`
 * [Windows] **Breaking change** removed the `details` parameter from the `zonedScheduleRawXml()` method as it was not actually used. Thanks to the PR from [Levi Lesches](https://github.com/Levi-Lesches)
+* [Android] updated Java compatibility version to 17
+* [Android] fixed issue [#2745](https://github.com/MaikuB/flutter_local_notifications/issues/2745) to export the `AndroidIcon` abstract class 
 * Updated readme with information for developers that plan to move to use the UIScene lifecycle
 * Added `flutter_lints` to apply linter rules
 

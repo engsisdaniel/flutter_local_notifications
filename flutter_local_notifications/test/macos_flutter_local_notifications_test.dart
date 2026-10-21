@@ -30,6 +30,8 @@ void main() {
               return <Map<String, Object>?>[];
             } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
               return null;
+            } else if (methodCall.method == 'openAppNotificationSettings') {
+              return true;
             }
             return null;
           });
@@ -44,7 +46,9 @@ void main() {
           DarwinInitializationSettings();
       const InitializationSettings initializationSettings =
           InitializationSettings(macOS: macOSInitializationSettings);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
       expect(log, <Matcher>[
         isMethodCall(
           'initialize',
@@ -80,7 +84,9 @@ void main() {
           );
       const InitializationSettings initializationSettings =
           InitializationSettings(macOS: macOSInitializationSettings);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
       expect(log, <Matcher>[
         isMethodCall(
           'initialize',
@@ -107,12 +113,13 @@ void main() {
           DarwinInitializationSettings();
       const InitializationSettings initializationSettings =
           InitializationSettings(macOS: macOSInitializationSettings);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
       await flutterLocalNotificationsPlugin.show(
-        1,
-        'notification title',
-        'notification body',
-        null,
+        id: 1,
+        title: 'notification title',
+        body: 'notification body',
       );
       expect(
         log.last,
@@ -134,7 +141,9 @@ void main() {
           DarwinInitializationSettings();
       const InitializationSettings initializationSettings =
           InitializationSettings(macOS: macOSInitializationSettings);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
       const NotificationDetails notificationDetails = NotificationDetails(
         macOS: DarwinNotificationDetails(
           subtitle: 'a subtitle',
@@ -159,10 +168,10 @@ void main() {
       );
 
       await flutterLocalNotificationsPlugin.show(
-        1,
-        'notification title',
-        'notification body',
-        notificationDetails,
+        id: 1,
+        title: 'notification title',
+        body: 'notification body',
+        notificationDetails: notificationDetails,
       );
 
       expect(
@@ -195,6 +204,7 @@ void main() {
               'categoryIdentifier': 'category1',
               'interruptionLevel': 2,
               'criticalSoundVolume': 0.5,
+              'dismissIsolate': null,
             },
           },
         ),
@@ -211,7 +221,7 @@ void main() {
             const InitializationSettings initializationSettings =
                 InitializationSettings(macOS: macOSInitializationSettings);
             await flutterLocalNotificationsPlugin.initialize(
-              initializationSettings,
+              settings: initializationSettings,
             );
 
             const NotificationDetails notificationDetails = NotificationDetails(
@@ -233,11 +243,11 @@ void main() {
             );
 
             await flutterLocalNotificationsPlugin.periodicallyShow(
-              1,
-              'notification title',
-              'notification body',
-              repeatInterval,
-              notificationDetails,
+              id: 1,
+              title: 'notification title',
+              body: 'notification body',
+              repeatInterval: repeatInterval,
+              notificationDetails: notificationDetails,
               androidScheduleMode: AndroidScheduleMode.exact,
             );
 
@@ -273,6 +283,7 @@ void main() {
                     'categoryIdentifier': null,
                     'interruptionLevel': null,
                     'criticalSoundVolume': null,
+                    'dismissIsolate': null,
                   },
                 },
               ),
@@ -293,7 +304,7 @@ void main() {
           const InitializationSettings initializationSettings =
               InitializationSettings(macOS: macOSInitializationSettings);
           await flutterLocalNotificationsPlugin.initialize(
-            initializationSettings,
+            settings: initializationSettings,
           );
 
           const NotificationDetails notificationDetails = NotificationDetails(
@@ -317,11 +328,11 @@ void main() {
           expect(
             () async => await flutterLocalNotificationsPlugin
                 .periodicallyShowWithDuration(
-                  1,
-                  'notification title',
-                  'notification body',
-                  thirtySeconds,
-                  notificationDetails,
+                  id: 1,
+                  title: 'notification title',
+                  body: 'notification body',
+                  repeatDurationInterval: thirtySeconds,
+                  notificationDetails: notificationDetails,
                 ),
             throwsA(isA<ArgumentError>()),
           );
@@ -343,7 +354,7 @@ void main() {
             const InitializationSettings initializationSettings =
                 InitializationSettings(macOS: macOSInitializationSettings);
             await flutterLocalNotificationsPlugin.initialize(
-              initializationSettings,
+              settings: initializationSettings,
             );
 
             const NotificationDetails notificationDetails = NotificationDetails(
@@ -365,11 +376,11 @@ void main() {
             );
 
             await flutterLocalNotificationsPlugin.periodicallyShowWithDuration(
-              1,
-              'notification title',
-              'notification body',
-              repeatDurationInterval,
-              notificationDetails,
+              id: 1,
+              title: 'notification title',
+              body: 'notification body',
+              repeatDurationInterval: repeatDurationInterval,
+              notificationDetails: notificationDetails,
             );
 
             expect(
@@ -405,6 +416,7 @@ void main() {
                     'categoryIdentifier': null,
                     'interruptionLevel': null,
                     'criticalSoundVolume': null,
+                    'dismissIsolate': null,
                   },
                 },
               ),
@@ -421,7 +433,7 @@ void main() {
         const InitializationSettings initializationSettings =
             InitializationSettings(macOS: macOSInitializationSettings);
         await flutterLocalNotificationsPlugin.initialize(
-          initializationSettings,
+          settings: initializationSettings,
         );
         tz.initializeTimeZones();
         tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
@@ -447,11 +459,11 @@ void main() {
         );
 
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          1,
-          'notification title',
-          'notification body',
-          scheduledDate,
-          notificationDetails,
+          id: 1,
+          title: 'notification title',
+          body: 'notification body',
+          scheduledDate: scheduledDate,
+          notificationDetails: notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
 
@@ -488,6 +500,7 @@ void main() {
                 'categoryIdentifier': null,
                 'interruptionLevel': null,
                 'criticalSoundVolume': null,
+                'dismissIsolate': null,
               },
             },
           ),
@@ -500,7 +513,7 @@ void main() {
         const InitializationSettings initializationSettings =
             InitializationSettings(macOS: macOSInitializationSettings);
         await flutterLocalNotificationsPlugin.initialize(
-          initializationSettings,
+          settings: initializationSettings,
         );
         tz.initializeTimeZones();
         tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
@@ -526,11 +539,11 @@ void main() {
         );
 
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          1,
-          'notification title',
-          'notification body',
-          scheduledDate,
-          notificationDetails,
+          id: 1,
+          title: 'notification title',
+          body: 'notification body',
+          scheduledDate: scheduledDate,
+          notificationDetails: notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
         );
@@ -569,6 +582,7 @@ void main() {
                 'categoryIdentifier': null,
                 'interruptionLevel': null,
                 'criticalSoundVolume': null,
+                'dismissIsolate': null,
               },
             },
           ),
@@ -581,7 +595,7 @@ void main() {
         const InitializationSettings initializationSettings =
             InitializationSettings(macOS: macOSInitializationSettings);
         await flutterLocalNotificationsPlugin.initialize(
-          initializationSettings,
+          settings: initializationSettings,
         );
         tz.initializeTimeZones();
         tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
@@ -607,11 +621,11 @@ void main() {
         );
 
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          1,
-          'notification title',
-          'notification body',
-          scheduledDate,
-          notificationDetails,
+          id: 1,
+          title: 'notification title',
+          body: 'notification body',
+          scheduledDate: scheduledDate,
+          notificationDetails: notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         );
@@ -651,6 +665,7 @@ void main() {
                 'categoryIdentifier': null,
                 'interruptionLevel': null,
                 'criticalSoundVolume': null,
+                'dismissIsolate': null,
               },
             },
           ),
@@ -714,8 +729,31 @@ void main() {
       expect(log, <Matcher>[isMethodCall('checkPermissions', arguments: null)]);
     });
 
+    test('openAppNotificationSettings', () async {
+      final bool? opened = await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >()!
+          .openAppNotificationSettings();
+      expect(opened, isTrue);
+      expect(
+        log.last,
+        isMethodCall('openAppNotificationSettings', arguments: null),
+      );
+    });
+
+    test('openAppNotificationSettings (cross-platform)', () async {
+      final bool? opened = await flutterLocalNotificationsPlugin
+          .openAppNotificationSettings();
+      expect(opened, isTrue);
+      expect(
+        log.last,
+        isMethodCall('openAppNotificationSettings', arguments: null),
+      );
+    });
+
     test('cancel', () async {
-      await flutterLocalNotificationsPlugin.cancel(1);
+      await flutterLocalNotificationsPlugin.cancel(id: 1);
       expect(log, <Matcher>[isMethodCall('cancel', arguments: 1)]);
     });
 
@@ -759,7 +797,9 @@ void main() {
           );
       const InitializationSettings initializationSettings =
           InitializationSettings(macOS: macOSInitializationSettings);
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
       expect(log, <Matcher>[
         isMethodCall(
           'initialize',

@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:clock/clock.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications_platform_interface/flutter_local_notifications_platform_interface.dart';
-import 'package:timezone/timezone.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import 'callback_dispatcher.dart';
 import 'helpers.dart';
@@ -24,7 +24,7 @@ import 'platform_specifics/darwin/initialization_settings.dart';
 import 'platform_specifics/darwin/mappers.dart';
 import 'platform_specifics/darwin/notification_details.dart';
 import 'platform_specifics/darwin/notification_enabled_options.dart';
-import 'types.dart';
+
 import 'tz_datetime_mapper.dart';
 
 const MethodChannel _channel = MethodChannel(
@@ -35,7 +35,7 @@ const MethodChannel _channel = MethodChannel(
 class MethodChannelFlutterLocalNotificationsPlugin
     extends FlutterLocalNotificationsPlatform {
   @override
-  Future<void> cancel(int id) {
+  Future<void> cancel({required int id}) {
     validateId(id);
     return _channel.invokeMethod('cancel', id);
   }
@@ -148,8 +148,8 @@ class AndroidFlutterLocalNotificationsPlugin
   /// [onDidReceiveBackgroundNotificationResponse]
   /// callback need to be annotated with the `@pragma('vm:entry-point')`
   /// annotation to ensure they are not stripped out by the Dart compiler.
-  Future<bool> initialize(
-    AndroidInitializationSettings initializationSettings, {
+  Future<bool> initialize({
+    required AndroidInitializationSettings settings,
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
     DidReceiveBackgroundNotificationResponseCallback?
     onDidReceiveBackgroundNotificationResponse,
@@ -157,7 +157,7 @@ class AndroidFlutterLocalNotificationsPlugin
     _onDidReceiveNotificationResponse = onDidReceiveNotificationResponse;
     _channel.setMethodCallHandler(_handleMethod);
 
-    final Map<String, Object> arguments = initializationSettings.toMap();
+    final Map<String, Object> arguments = settings.toMap();
 
     _evaluateBackgroundNotificationCallback(
       onDidReceiveBackgroundNotificationResponse,
@@ -243,15 +243,16 @@ class AndroidFlutterLocalNotificationsPlugin
   /// This will also require additional setup for the app, especially in the
   /// app's `AndroidManifest.xml` file. Please see check the readme for further
   /// details.
-  Future<void> zonedSchedule(
-    int id,
+  @override
+  Future<void> zonedSchedule({
+    required int id,
     String? title,
     String? body,
-    TZDateTime scheduledDate,
-    AndroidNotificationDetails? notificationDetails, {
-    required AndroidScheduleMode scheduleMode,
+    required tz.TZDateTime scheduledDate,
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
+    AndroidNotificationDetails? notificationDetails,
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
   }) async {
     validateId(id);
     validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
@@ -320,10 +321,10 @@ class AndroidFlutterLocalNotificationsPlugin
   /// Note that `foregroundServiceType` (the parameter in this method)
   /// must be a subset of the `android:foregroundServiceType`
   /// defined in your `AndroidManifest.xml` (the one from the section above)!
-  Future<void> startForegroundService(
-    int id,
+  Future<void> startForegroundService({
+    required int id,
     String? title,
-    String? body, {
+    String? body,
     AndroidNotificationDetails? notificationDetails,
     String? payload,
     AndroidServiceStartType startType = AndroidServiceStartType.startSticky,
@@ -372,10 +373,10 @@ class AndroidFlutterLocalNotificationsPlugin
       _channel.invokeMethod('stopForegroundService');
 
   @override
-  Future<void> show(
-    int id,
+  Future<void> show({
+    required int id,
     String? title,
-    String? body, {
+    String? body,
     AndroidNotificationDetails? notificationDetails,
     String? payload,
   }) {
@@ -399,11 +400,11 @@ class AndroidFlutterLocalNotificationsPlugin
   /// app's `AndroidManifest.xml` file. Please see check the readme for further
   /// details.
   @override
-  Future<void> periodicallyShow(
-    int id,
+  Future<void> periodicallyShow({
+    required int id,
     String? title,
     String? body,
-    RepeatInterval repeatInterval, {
+    required RepeatInterval repeatInterval,
     AndroidNotificationDetails? notificationDetails,
     String? payload,
     DateTime? initialDate, // Data de início para disparo do alarme
@@ -436,11 +437,11 @@ class AndroidFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> periodicallyShowWithDuration(
-    int id,
+  Future<void> periodicallyShowWithDuration({
+    required int id,
     String? title,
     String? body,
-    Duration repeatDurationInterval, {
+    required Duration repeatDurationInterval,
     AndroidNotificationDetails? notificationDetails,
     String? payload,
     AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
@@ -479,7 +480,7 @@ class AndroidFlutterLocalNotificationsPlugin
   /// then the notification that matches both the id and the tag will
   /// be canceled. `tag` has no effect on other platforms.
   @override
-  Future<void> cancel(int id, {String? tag}) async {
+  Future<void> cancel({required int id, String? tag}) async {
     validateId(id);
 
     return _channel.invokeMethod('cancel', <String, Object?>{
@@ -502,7 +503,7 @@ class AndroidFlutterLocalNotificationsPlugin
   /// as well as all of the channels belonging to the group.
   ///
   /// This method is only applicable to Android versions 8.0 or newer.
-  Future<void> deleteNotificationChannelGroup(String groupId) =>
+  Future<void> deleteNotificationChannelGroup({required String groupId}) =>
       _channel.invokeMethod('deleteNotificationChannelGroup', groupId);
 
   /// Creates a notification channel.
@@ -518,7 +519,7 @@ class AndroidFlutterLocalNotificationsPlugin
   /// Deletes the notification channel with the specified [channelId].
   ///
   /// This method is only applicable to Android versions 8.0 or newer.
-  Future<void> deleteNotificationChannel(String channelId) =>
+  Future<void> deleteNotificationChannel({required String channelId}) =>
       _channel.invokeMethod('deleteNotificationChannel', channelId);
 
   /// Returns the messaging style information of an active notification shown
@@ -530,8 +531,8 @@ class AndroidFlutterLocalNotificationsPlugin
   ///
   /// Only [DrawableResourceAndroidIcon] and [ContentUriAndroidIcon] are
   /// supported for [AndroidIcon] fields.
-  Future<MessagingStyleInformation?> getActiveNotificationMessagingStyle(
-    int id, {
+  Future<MessagingStyleInformation?> getActiveNotificationMessagingStyle({
+    required int id,
     String? tag,
   }) async {
     final Map<dynamic, dynamic>? m = await _channel.invokeMethod(
@@ -635,9 +636,27 @@ class AndroidFlutterLocalNotificationsPlugin
   Future<bool?> areNotificationsEnabled() async =>
       await _channel.invokeMethod<bool>('areNotificationsEnabled');
 
+  /// Opens the operating system notification settings screen for this app.
+  ///
+  /// On Android, this attempts to open the app's notification settings screen
+  /// and falls back to the app details screen if needed.
+  ///
+  /// Returns whether an activity could be launched.
+  @override
+  Future<bool?> openAppNotificationSettings() async =>
+      await _channel.invokeMethod<bool>('openAppNotificationSettings');
+
   /// Returns whether the app can schedule exact notifications.
   Future<bool?> canScheduleExactNotifications() async =>
       await _channel.invokeMethod<bool>('canScheduleExactNotifications');
+
+  /// Returns whether the app can post promoted ongoing ("Live Update")
+  /// notifications.
+  ///
+  /// On Android 16 and newer this reflects whether the user has allowed the
+  /// app's notifications to be promoted. On older versions it returns `false`.
+  Future<bool?> canPostPromotedNotifications() async =>
+      await _channel.invokeMethod<bool>('canPostPromotedNotifications');
 
   AndroidNotificationSound? _getNotificationChannelSound(
     Map<dynamic, dynamic> channelMap,
@@ -686,9 +705,13 @@ class IOSFlutterLocalNotificationsPlugin
 
   DidReceiveNotificationResponseCallback? _onDidReceiveNotificationResponse;
 
-  /// Initializes the plugin.
+  /// Initializes the plugin for iOS.
   ///
   /// Call this method on application before using the plugin further.
+  ///
+  /// Accepts either [DarwinInitializationSettings] for basic Darwin-based
+  /// configuration or [IOSInitializationSettings] for iOS-specific features
+  /// like CarPlay notifications.
   ///
   /// Initialisation may also request notification permissions where users will
   /// see a permissions prompt. This may be fine in cases where it's acceptable
@@ -702,6 +725,11 @@ class IOSFlutterLocalNotificationsPlugin
   /// [requestPermissions] can then be called to request permissions when
   /// needed.
   ///
+  /// When using [IOSInitializationSettings], CarPlay notifications can be
+  /// enabled by setting [IOSInitializationSettings.requestCarPlayPermission]
+  /// to true. When using [DarwinInitializationSettings], CarPlay is disabled
+  /// by default.
+  ///
   /// The [onDidReceiveNotificationResponse] callback is fired when the user
   /// selects a notification or notification action that should show the
   /// application/user interface.
@@ -713,8 +741,8 @@ class IOSFlutterLocalNotificationsPlugin
   /// [onDidReceiveBackgroundNotificationResponse]
   /// callback need to be annotated with the `@pragma('vm:entry-point')`
   /// annotation to ensure they are not stripped out by the Dart compiler.
-  Future<bool?> initialize(
-    DarwinInitializationSettings initializationSettings, {
+  Future<bool?> initialize({
+    required DarwinInitializationSettings settings,
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
     DidReceiveBackgroundNotificationResponseCallback?
     onDidReceiveBackgroundNotificationResponse,
@@ -722,7 +750,17 @@ class IOSFlutterLocalNotificationsPlugin
     _onDidReceiveNotificationResponse = onDidReceiveNotificationResponse;
     _channel.setMethodCallHandler(_handleMethod);
 
-    final Map<String, Object> arguments = initializationSettings.toMap();
+    // Convert to map using appropriate mapper based on runtime type
+    // IOSInitializationSettings.toMap() automatically includes CarPlay field
+    // DarwinInitializationSettings.toMap() does not include CarPlay field
+    final Map<String, Object> arguments;
+    if (settings is IOSInitializationSettings) {
+      // Explicitly call iOS mapper extension
+      arguments = settings.toMap();
+    } else {
+      // Use Darwin mapper for DarwinInitializationSettings
+      arguments = settings.toMap();
+    }
 
     _evaluateBackgroundNotificationCallback(
       onDidReceiveBackgroundNotificationResponse,
@@ -734,12 +772,17 @@ class IOSFlutterLocalNotificationsPlugin
 
   /// Requests the specified permission(s) from user and returns current
   /// permission status.
+  ///
+  /// On iOS, the [carPlay] parameter requests permission to show notifications
+  /// on CarPlay when connected to a compatible vehicle. This requires iOS 10.0+
+  /// and is only applicable to iOS devices.
   Future<bool?> requestPermissions({
     bool sound = false,
     bool alert = false,
     bool badge = false,
     bool provisional = false,
     bool critical = false,
+    bool carPlay = false,
     bool providesAppNotificationSettings = false,
   }) => _channel.invokeMethod<bool?>('requestPermissions', <String, bool>{
     'sound': sound,
@@ -747,6 +790,7 @@ class IOSFlutterLocalNotificationsPlugin
     'badge': badge,
     'provisional': provisional,
     'critical': critical,
+    'carPlay': carPlay,
     'providesAppNotificationSettings': providesAppNotificationSettings,
   });
 
@@ -769,19 +813,36 @@ class IOSFlutterLocalNotificationsPlugin
           isCriticalEnabled: dict['isCriticalEnabled'] ?? false,
           isProvidesAppNotificationSettingsEnabled:
               dict['isProvidesAppNotificationSettingsEnabled'] ?? false,
+          isCarPlayEnabled: dict['isCarPlayEnabled'] ?? false,
         );
       });
 
+  /// Opens the system settings UI where the user can manage notification
+  /// permissions for the app.
+  ///
+  /// On iOS 15.4 and newer, this attempts to open the app's Notifications
+  /// settings page. If that's not possible, it falls back to opening the app's
+  /// Settings page.
+  ///
+  /// Note that iOS may still redirect to the Settings app root depending on the
+  /// OS version and device configuration.
+  ///
+  /// Returns whether the settings page could be opened.
+  @override
+  Future<bool?> openAppNotificationSettings() async =>
+      await _channel.invokeMethod<bool>('openAppNotificationSettings');
+
   /// Schedules a notification to be shown at the specified time in the
   /// future in a specific time zone.
-  Future<void> zonedSchedule(
-    int id,
+  @override
+  Future<void> zonedSchedule({
+    required int id,
     String? title,
     String? body,
-    TZDateTime scheduledDate,
-    DarwinNotificationDetails? notificationDetails, {
+    required tz.TZDateTime scheduledDate,
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
+    DarwinNotificationDetails? notificationDetails,
   }) async {
     validateId(id);
     validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
@@ -808,10 +869,10 @@ class IOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> show(
-    int id,
+  Future<void> show({
+    required int id,
     String? title,
-    String? body, {
+    String? body,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
   }) {
@@ -826,11 +887,11 @@ class IOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> periodicallyShow(
-    int id,
+  Future<void> periodicallyShow({
+    required int id,
     String? title,
     String? body,
-    RepeatInterval repeatInterval, {
+    required RepeatInterval repeatInterval,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
     DateTime? initialDate,
@@ -859,11 +920,11 @@ class IOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> periodicallyShowWithDuration(
-    int id,
+  Future<void> periodicallyShowWithDuration({
+    required int id,
     String? title,
     String? body,
-    Duration repeatDurationInterval, {
+    required Duration repeatDurationInterval,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
   }) async {
@@ -931,16 +992,13 @@ class MacOSFlutterLocalNotificationsPlugin
   /// interacts with a notification that was displayed by the plugin and the
   /// application was running. To handle when a notification launched an
   /// application, use [getNotificationAppLaunchDetails].
-  Future<bool?> initialize(
-    DarwinInitializationSettings initializationSettings, {
+  Future<bool?> initialize({
+    required DarwinInitializationSettings settings,
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
   }) async {
     _onDidReceiveNotificationResponse = onDidReceiveNotificationResponse;
     _channel.setMethodCallHandler(_handleMethod);
-    return await _channel.invokeMethod(
-      'initialize',
-      initializationSettings.toMap(),
-    );
+    return await _channel.invokeMethod('initialize', settings.toMap());
   }
 
   /// Requests the specified permission(s) from user and returns current
@@ -983,16 +1041,28 @@ class MacOSFlutterLocalNotificationsPlugin
         );
       });
 
+  /// Opens the system settings UI where the user can manage notification
+  /// permissions for the app.
+  ///
+  /// Falls back to opening the system settings notifications pane if the app's
+  /// notifications settings page cannot be opened.
+  ///
+  /// Returns whether the settings page could be opened.
+  @override
+  Future<bool?> openAppNotificationSettings() async =>
+      await _channel.invokeMethod<bool>('openAppNotificationSettings');
+
   /// Schedules a notification to be shown at the specified date and time
   /// relative to a specific time zone.
-  Future<void> zonedSchedule(
-    int id,
+  @override
+  Future<void> zonedSchedule({
+    required int id,
     String? title,
     String? body,
-    TZDateTime scheduledDate,
-    DarwinNotificationDetails? notificationDetails, {
+    required tz.TZDateTime scheduledDate,
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
+    DarwinNotificationDetails? notificationDetails,
   }) async {
     validateId(id);
     validateDateIsInTheFuture(scheduledDate, matchDateTimeComponents);
@@ -1019,10 +1089,10 @@ class MacOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> show(
-    int id,
+  Future<void> show({
+    required int id,
     String? title,
-    String? body, {
+    String? body,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
   }) {
@@ -1037,11 +1107,11 @@ class MacOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> periodicallyShow(
-    int id,
+  Future<void> periodicallyShow({
+    required int id,
     String? title,
     String? body,
-    RepeatInterval repeatInterval, {
+    required RepeatInterval repeatInterval,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
     DateTime? initialDate,
@@ -1070,11 +1140,11 @@ class MacOSFlutterLocalNotificationsPlugin
   }
 
   @override
-  Future<void> periodicallyShowWithDuration(
-    int id,
+  Future<void> periodicallyShowWithDuration({
+    required int id,
     String? title,
     String? body,
-    Duration repeatDurationInterval, {
+    required Duration repeatDurationInterval,
     DarwinNotificationDetails? notificationDetails,
     String? payload,
   }) async {
