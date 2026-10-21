@@ -402,63 +402,63 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         do {
             let arguments = call.arguments as! [String: AnyObject]
             let content = try buildUserNotificationContent(fromArguments: arguments)
-            
+
             // Check if there are any constraints (daysOfWeek, startTime, endTime)
             let daysOfWeek = arguments[MethodCallArguments.daysOfWeek] as? [Int]
             let startTime = arguments[MethodCallArguments.startTime] as? String
             let endTime = arguments[MethodCallArguments.endTime] as? String
             let customRepeatInterval = arguments[MethodCallArguments.customRepeatInterval] as? String
-            
+
             var hasConstraints = false
-            
+
             // Check if daysOfWeek constraint is active (not all days)
             if let days = daysOfWeek, days.count < 7 {
                 hasConstraints = true
             }
-            
+
             // Check if time range constraint is active (not full day)
             if let start = startTime, let end = endTime,
                start != "00:00" || end != "23:59" {
                 hasConstraints = true
             }
-            
+
             // Check if custom repeat interval is used
             if customRepeatInterval != nil {
                 hasConstraints = true
             }
-            
+
             let trigger: UNTimeIntervalNotificationTrigger
-            
+
             if hasConstraints {
                 // For constrained scheduling, calculate the next valid trigger time
                 let calledAtMillis = arguments[MethodCallArguments.calledAt] as? NSNumber
                 let initialTriggerTime: TimeInterval
-                
+
                 if let millis = calledAtMillis {
                     initialTriggerTime = millis.doubleValue / 1000.0
                 } else {
                     initialTriggerTime = Date().timeIntervalSince1970
                 }
-                
+
                 // Calculate repeat interval
                 let repeatInterval = FlutterLocalNotificationsPlugin.calculateRepeatIntervalSeconds(arguments: arguments)
-                
+
                 // Calculate the next valid notification trigger time considering all constraints
                 let nextTriggerTime = FlutterLocalNotificationsPlugin.calculateNextNotificationTrigger(
                     notificationTriggerTime: initialTriggerTime,
                     repeatInterval: repeatInterval,
                     arguments: arguments
                 )
-                
+
                 // Calculate time interval from now to the next trigger
                 let currentTime = Date().timeIntervalSince1970
                 var timeInterval = nextTriggerTime - currentTime
-                
+
                 // Ensure the time interval is positive and at least 1 second
                 if timeInterval < 1 {
                     timeInterval = 1
                 }
-                
+
                 // For macOS, we'll use repeating trigger with the calculated interval
                 // Note: This is a best-effort approach. macOS doesn't support the same
                 // level of constraint-based scheduling as Android's AlarmManager
@@ -467,7 +467,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
                 // For simple repeating notifications without constraints, use the standard approach
                 trigger = buildUserNotificationTimeIntervalTrigger(fromArguments: arguments)
             }
-            
+
             let center = UNUserNotificationCenter.current()
             let request = UNNotificationRequest(identifier: getIdentifier(fromArguments: arguments), content: content, trigger: trigger)
             center.add(request)
@@ -610,37 +610,37 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         guard let daysOfWeek = daysOfWeek, !daysOfWeek.isEmpty else {
             return true
         }
-        
+
         let date = Date(timeIntervalSince1970: notificationTriggerTime)
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: date)
-        
+
         return daysOfWeek.contains(weekday)
     }
-    
+
     static func isOnValidInterval(notificationTriggerTime: TimeInterval, startTimeString: String?, endTimeString: String?) -> Bool {
         guard let startTimeString = startTimeString, let endTimeString = endTimeString else {
             return true
         }
-        
+
         let date = Date(timeIntervalSince1970: notificationTriggerTime)
         let calendar = Calendar.current
         let timeComponents = calendar.dateComponents([.hour, .minute], from: date)
-        
+
         // Parse start time (format: "HH:mm")
         let startParts = startTimeString.split(separator: ":")
         let startHour = Int(startParts[0]) ?? 0
         let startMinute = Int(startParts[1]) ?? 0
-        
+
         // Parse end time (format: "HH:mm")
         let endParts = endTimeString.split(separator: ":")
         let endHour = Int(endParts[0]) ?? 0
         let endMinute = Int(endParts[1]) ?? 0
-        
+
         let triggerMinutes = (timeComponents.hour ?? 0) * 60 + (timeComponents.minute ?? 0)
         let startMinutes = startHour * 60 + startMinute
         let endMinutes = endHour * 60 + endMinute
-        
+
         if endMinutes >= startMinutes {
             // Same day interval (e.g., 08:00 to 20:00)
             return triggerMinutes >= startMinutes && triggerMinutes <= endMinutes
@@ -649,8 +649,8 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
             return triggerMinutes >= startMinutes || triggerMinutes <= endMinutes
         }
     }
-    
-    static func calculateNextNotificationTrigger(notificationTriggerTime: TimeInterval, 
+
+    static func calculateNextNotificationTrigger(notificationTriggerTime: TimeInterval,
                                                  repeatInterval: TimeInterval,
                                                  arguments: [String: AnyObject]) -> TimeInterval {
         var currentTriggerTime = notificationTriggerTime
@@ -659,14 +659,14 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         let startTime = arguments[MethodCallArguments.startTime] as? String
         let endTime = arguments[MethodCallArguments.endTime] as? String
         let customRepeatInterval = arguments[MethodCallArguments.customRepeatInterval] as? String
-        
+
         let calendar = Calendar.current
         var date = Date(timeIntervalSince1970: currentTriggerTime)
-        
+
         while currentTriggerTime < currentTime ||
               !isOnValidWeekDay(notificationTriggerTime: currentTriggerTime, daysOfWeek: daysOfWeek) ||
               !isOnValidInterval(notificationTriggerTime: currentTriggerTime, startTimeString: startTime, endTimeString: endTime) {
-            
+
             if let customInterval = customRepeatInterval {
                 if customInterval == "Annually" {
                     date = calendar.date(byAdding: .year, value: 1, to: date) ?? date
@@ -683,24 +683,24 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
                 date = Date(timeIntervalSince1970: currentTriggerTime)
             }
         }
-        
+
         return currentTriggerTime
     }
-    
+
     static func calculateRepeatIntervalSeconds(arguments: [String: AnyObject]) -> TimeInterval {
         var repeatInterval: TimeInterval = 0
-        
+
         // Check if repeatMinutes parameter was provided
         if let repeatMinutes = arguments[MethodCallArguments.repeatMinutes] as? Int {
             repeatInterval = TimeInterval(repeatMinutes * 60)
             return repeatInterval
         }
-        
+
         if let repeatIntervalMilliseconds = arguments[MethodCallArguments.repeatIntervalMilliseconds] as? Int {
             repeatInterval = TimeInterval(repeatIntervalMilliseconds) / 1000.0
             return repeatInterval
         }
-        
+
         // Use standard repeat interval
         if let rawRepeatInterval = arguments[MethodCallArguments.repeatInterval] as? Int,
            let repeatIntervalEnum = RepeatInterval(rawValue: rawRepeatInterval) {
@@ -715,7 +715,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
                 repeatInterval = 60 * 60 * 24 * 7
             }
         }
-        
+
         return repeatInterval
     }
 
