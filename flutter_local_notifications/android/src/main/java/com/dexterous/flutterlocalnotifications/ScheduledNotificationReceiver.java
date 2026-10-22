@@ -58,8 +58,26 @@ public class ScheduledNotificationReceiver extends BroadcastReceiver {
       Type type = new TypeToken<NotificationDetails>() {}.getType();
       NotificationDetails notificationDetails = gson.fromJson(notificationDetailsJson, type);
 
-      FlutterLocalNotificationsPlugin.showNotification(context, notificationDetails);
-      FlutterLocalNotificationsPlugin.scheduleNextNotification(context, notificationDetails);
+      // Agenda a próxima antes de mostrar a atual: se mostrar falhar (canal, imagem, permissão),
+      // a série continua. Antes a ordem era inversa e uma falha matava a repetição.
+      try {
+        FlutterLocalNotificationsPlugin.scheduleNextNotification(context, notificationDetails);
+      } catch (Exception e) {
+        Log.e(TAG, "Falha ao agendar a próxima ocorrência", e);
+      }
+
+      // Alarme com som nativo: o serviço mostra a notificação e toca. Se o sistema recusar o
+      // serviço, cai para a notificação comum.
+      boolean playing =
+          notificationDetails.alarmSound != null
+              && AlarmSoundService.start(context, notificationDetails);
+      if (!playing) {
+        try {
+          FlutterLocalNotificationsPlugin.showNotification(context, notificationDetails);
+        } catch (Exception e) {
+          Log.e(TAG, "Falha ao mostrar a notificação", e);
+        }
+      }
     }
   }
 }

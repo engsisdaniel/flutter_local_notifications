@@ -145,6 +145,7 @@ public class NotificationDetails implements Serializable {
   private static final String MATCH_DATE_TIME_COMPONENTS = "matchDateTimeComponents";
 
   private static final String FULL_SCREEN_INTENT = "fullScreenIntent";
+  private static final String ALARM_SOUND = "alarmSound";
   private static final String DISMISS_ISOLATE = "dismissIsolate";
   private static final String SHORTCUT_ID = "shortcutId";
   private static final String SUB_TEXT = "subText";
@@ -222,6 +223,9 @@ public class NotificationDetails implements Serializable {
   public DateTimeComponents matchDateTimeComponents;
   public Long when;
   public Boolean fullScreenIntent;
+
+  /** Som de alarme nativo (extensão do fork); nulo para notificação comum. */
+  public AlarmSound alarmSound;
   public Integer dismissIsolate;
   public String shortcutId;
   public String subText;
@@ -342,6 +346,10 @@ public class NotificationDetails implements Serializable {
       notificationDetails.category = (String) platformChannelSpecifics.get(CATEGORY);
       notificationDetails.fullScreenIntent =
           (Boolean) platformChannelSpecifics.get((FULL_SCREEN_INTENT));
+      @SuppressWarnings("unchecked")
+      Map<String, Object> alarmSound =
+          (Map<String, Object>) platformChannelSpecifics.get(ALARM_SOUND);
+      if (alarmSound != null) notificationDetails.alarmSound = AlarmSound.from(alarmSound);
       notificationDetails.dismissIsolate = (Integer) platformChannelSpecifics.get(DISMISS_ISOLATE);
       notificationDetails.shortcutId = (String) platformChannelSpecifics.get(SHORTCUT_ID);
       notificationDetails.additionalFlags = (int[]) platformChannelSpecifics.get(ADDITIONAL_FLAGS);

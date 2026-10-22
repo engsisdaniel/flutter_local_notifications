@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import '../../types.dart';
+import 'alarm_sound.dart';
 import 'bitmap.dart';
 import 'enums.dart';
 import 'notification_sound.dart';
@@ -151,6 +152,7 @@ class AndroidNotificationDetails {
     this.timeoutAfter,
     this.category,
     this.fullScreenIntent = false,
+    this.alarmSound,
     this.shortcutId,
     this.additionalFlags,
     this.subText,
@@ -382,6 +384,10 @@ class AndroidNotificationDetails {
   /// (e.g. via `onSelectNotification` callback) to display the appropriate
   /// page for your application.
   final bool fullScreenIntent;
+
+  /// Som de alarme tocado no lado nativo (extensão do fork); veja
+  /// [AndroidAlarmSound].
+  final AndroidAlarmSound? alarmSound;
 
   /// Specifies the id of a published, long-lived sharing that the notification
   /// will be linked to.

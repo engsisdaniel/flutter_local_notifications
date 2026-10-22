@@ -281,6 +281,8 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
           'timeoutAfter': timeoutAfter,
           'category': category?.name,
           'fullScreenIntent': fullScreenIntent,
+          // Só quando existe: a chave nula mudaria o mapa de toda notificação.
+          if (alarmSound != null) 'alarmSound': alarmSound!.toMap(),
           'shortcutId': shortcutId,
           'additionalFlags': additionalFlags,
           'subText': subText,

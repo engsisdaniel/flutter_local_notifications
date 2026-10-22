@@ -86,7 +86,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -97,8 +96,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.text.SimpleDateFormat;
-import java.text.DateFormat;
 
 import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.loader.FlutterLoader;
@@ -162,6 +159,9 @@ public class FlutterLocalNotificationsPlugin
   private static final String GET_NOTIFICATION_CHANNELS_METHOD = "getNotificationChannels";
   private static final String START_FOREGROUND_SERVICE = "startForegroundService";
   private static final String STOP_FOREGROUND_SERVICE = "stopForegroundService";
+  private static final String STOP_ALARM_SOUND_METHOD = "stopAlarmSound";
+  private static final String GET_PLAYING_ALARM_METHOD = "getPlayingAlarm";
+  private static final String CAN_USE_FULL_SCREEN_INTENT_METHOD = "canUseFullScreenIntent";
   private static final String PENDING_NOTIFICATION_REQUESTS_METHOD = "pendingNotificationRequests";
   private static final String GET_ACTIVE_NOTIFICATIONS_METHOD = "getActiveNotifications";
   private static final String SHOW_METHOD = "show";
@@ -235,26 +235,43 @@ public class FlutterLocalNotificationsPlugin
 
   private PermissionRequestProgress permissionRequestProgress = PermissionRequestProgress.None;
 
+  /**
+   * Quando verdadeiro, a falta de permissão de alarme exato agenda um alarme inexato em vez de
+   * lançar {@link ExactAlarmPermissionException}.
+   *
+   * <p>Ligado só nos caminhos de segundo plano (boot e cadeia de repetição), onde não há quem trate
+   * a exceção. Antes a exceção apagava a notificação do cache e a tarefa parava de alertar para
+   * sempre; atrasar é melhor que perder. Chamadas vindas do Dart continuam recebendo a exceção, para
+   * o app saber que precisa pedir a permissão.
+   */
+  private static boolean fallbackToInexact = false;
+
   static void rescheduleNotifications(Context context) {
     ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
-    for (NotificationDetails notificationDetails : scheduledNotifications) {
-      try {
-        if (notificationDetails.repeatInterval != null
-            || notificationDetails.repeatIntervalMilliseconds != null) {
-          repeatNotification(context, notificationDetails, false);
-        } else if (notificationDetails.timeZoneName != null) {
-          zonedScheduleNotification(context, notificationDetails, false);
-        } else {
-          scheduleNotification(context, notificationDetails, false);
+    fallbackToInexact = true;
+    try {
+      for (NotificationDetails notificationDetails : scheduledNotifications) {
+        // Uma notificação com problema não pode impedir o reagendamento das demais.
+        try {
+          if (notificationDetails.repeatInterval != null
+              || notificationDetails.repeatIntervalMilliseconds != null) {
+            repeatNotification(context, notificationDetails, false);
+          } else if (notificationDetails.timeZoneName != null) {
+            zonedScheduleNotification(context, notificationDetails, false);
+          } else {
+            scheduleNotification(context, notificationDetails, false);
+          }
+        } catch (Exception e) {
+          Log.e(TAG, "Falha ao reagendar " + notificationDetails.id, e);
         }
-      } catch (ExactAlarmPermissionException e) {
-        Log.e(TAG, e.getMessage());
-        removeNotificationFromCache(context, notificationDetails.id);
       }
+    } finally {
+      fallbackToInexact = false;
     }
   }
 
   static void scheduleNextNotification(Context context, NotificationDetails notificationDetails) {
+    fallbackToInexact = true;
     try {
       if (notificationDetails.scheduledNotificationRepeatFrequency != null) {
         zonedScheduleNextNotification(context, notificationDetails);
@@ -266,9 +283,8 @@ public class FlutterLocalNotificationsPlugin
       } else {
         removeNotificationFromCache(context, notificationDetails.id);
       }
-    } catch (ExactAlarmPermissionException e) {
-      Log.e(TAG, e.getMessage());
-      removeNotificationFromCache(context, notificationDetails.id);
+    } finally {
+      fallbackToInexact = false;
     }
   }
 
@@ -806,44 +822,6 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  private static boolean isOnValidWeekDay(long notificationTriggerTime, int[] daysOfWeek) {
-    if (daysOfWeek == null) return true;
-
-    Calendar calendarTriggerTime = Calendar.getInstance();
-
-    calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-    int day = calendarTriggerTime.get(Calendar.DAY_OF_WEEK);
-
-    for (int d : daysOfWeek) {
-      if (day == d) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean isOnValidInterval(
-      long notificationTriggerTime, String startTimeString, String endTimeString) {
-    if (startTimeString == null || endTimeString == null) return true;
-
-    LocalTime startTime = LocalTime.parse(startTimeString);
-    LocalTime endTime = LocalTime.parse(endTimeString);
-    if (startTime == null || endTime == null) return true;
-
-    DateFormat formatter = new SimpleDateFormat("HH:mm");
-    Calendar calendarTriggerTime = Calendar.getInstance();
-
-    calendarTriggerTime.setTimeInMillis(notificationTriggerTime);
-    LocalTime triggerTime = LocalTime.parse(formatter.format(calendarTriggerTime.getTime()));
-
-    if (endTime.compareTo(startTime) >= 0) {
-      return triggerTime.compareTo(startTime) >= 0 && triggerTime.compareTo(endTime) <= 0;
-    }
-
-    return triggerTime.compareTo(startTime) >= 0 || triggerTime.compareTo(endTime) <= 0;
-  }
-
   private static void setupAlarm(
       NotificationDetails notificationDetails,
       AlarmManager alarmManager,
@@ -861,12 +839,11 @@ public class FlutterLocalNotificationsPlugin
     if (notificationDetails.scheduleMode.useAllowWhileIdle()) {
       setupAllowWhileIdleAlarm(notificationDetails, alarmManager, epochMilli, pendingIntent);
     } else {
-      if (notificationDetails.scheduleMode.useExactAlarm()) {
-        checkCanScheduleExactAlarms(alarmManager);
+      if (notificationDetails.scheduleMode.useExactAlarm() && canUseExactAlarms(alarmManager)) {
         AlarmManagerCompat.setExact(
             alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
-      } else if (notificationDetails.scheduleMode.useAlarmClock()) {
-        checkCanScheduleExactAlarms(alarmManager);
+      } else if (notificationDetails.scheduleMode.useAlarmClock()
+          && canUseExactAlarms(alarmManager)) {
         AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
       } else {
         alarmManager.set(AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
@@ -879,12 +856,11 @@ public class FlutterLocalNotificationsPlugin
       AlarmManager alarmManager,
       long epochMilli,
       PendingIntent pendingIntent) {
-    if (notificationDetails.scheduleMode.useExactAlarm()) {
-      checkCanScheduleExactAlarms(alarmManager);
+    if (notificationDetails.scheduleMode.useExactAlarm() && canUseExactAlarms(alarmManager)) {
       AlarmManagerCompat.setExactAndAllowWhileIdle(
           alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
-    } else if (notificationDetails.scheduleMode.useAlarmClock()) {
-      checkCanScheduleExactAlarms(alarmManager);
+    } else if (notificationDetails.scheduleMode.useAlarmClock()
+        && canUseExactAlarms(alarmManager)) {
       AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
     } else {
       AlarmManagerCompat.setAndAllowWhileIdle(
@@ -892,44 +868,32 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  private static void checkCanScheduleExactAlarms(AlarmManager alarmManager) {
+  /**
+   * Verdadeiro se pode agendar alarme exato. Sem permissão, lança {@link
+   * ExactAlarmPermissionException}, ou devolve falso quando {@link #fallbackToInexact} está ligado.
+   */
+  private static boolean canUseExactAlarms(AlarmManager alarmManager) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+      if (fallbackToInexact) {
+        Log.w(TAG, "Sem permissão de alarme exato; agendando como inexato.");
+        return false;
+      }
       throw new ExactAlarmPermissionException();
     }
+    return true;
   }
 
   private static long calculateNextNotificationTrigger(
       long notificationTriggerTime, long repeatInterval, NotificationDetails notificationDetails) {
-    // ensures that time is in the future
-    long currentTime = System.currentTimeMillis();
-    Calendar cal = Calendar.getInstance();
-
-    cal.setTimeInMillis(notificationTriggerTime);
-
-    while (notificationTriggerTime < currentTime
-        || !isOnValidWeekDay(notificationTriggerTime, notificationDetails.daysOfWeek)
-        || !isOnValidInterval(
-            notificationTriggerTime, notificationDetails.startTime, notificationDetails.endTime)) {
-      if (notificationDetails.customRepeatInterval != null) {
-        switch (notificationDetails.customRepeatInterval) {
-          case "Annually":
-            cal.add(Calendar.YEAR, 1);
-            notificationTriggerTime = cal.getTimeInMillis();
-            break;
-          case "Monthly":
-            cal.add(Calendar.MONTH, 1);
-            notificationTriggerTime = cal.getTimeInMillis();
-            break;
-          default:
-            notificationTriggerTime += repeatInterval;
-            break;
-        }
-      } else {
-        notificationTriggerTime += repeatInterval;
-      }
-    }
-
-    return notificationTriggerTime;
+    return RepeatTriggerCalculator.next(
+        notificationTriggerTime,
+        System.currentTimeMillis(),
+        repeatInterval,
+        notificationDetails.customRepeatInterval,
+        notificationDetails.daysOfWeek,
+        notificationDetails.startTime,
+        notificationDetails.endTime,
+        java.time.ZoneId.systemDefault());
   }
 
   private static long calculateRepeatIntervalMilliseconds(NotificationDetails notificationDetails) {
@@ -1826,6 +1790,16 @@ public class FlutterLocalNotificationsPlugin
       case START_FOREGROUND_SERVICE:
         startForegroundService(call, result);
         break;
+      case STOP_ALARM_SOUND_METHOD:
+        AlarmSoundService.stop(applicationContext);
+        result.success(null);
+        break;
+      case GET_PLAYING_ALARM_METHOD:
+        getPlayingAlarm(result);
+        break;
+      case CAN_USE_FULL_SCREEN_INTENT_METHOD:
+        canUseFullScreenIntent(result);
+        break;
       case STOP_FOREGROUND_SERVICE:
         stopForegroundService(result);
         break;
@@ -2635,6 +2609,30 @@ public class FlutterLocalNotificationsPlugin
   private void canPostPromotedNotifications(Result result) {
     NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
     result.success(notificationManager.canPostPromotedNotifications());
+  }
+
+  /** Alarme com som nativo tocando agora ({@code id}, {@code payload}), ou nulo. */
+  private void getPlayingAlarm(Result result) {
+    NotificationDetails playing = AlarmSoundService.playing();
+    if (playing == null) {
+      result.success(null);
+      return;
+    }
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", playing.id);
+    map.put("payload", playing.payload);
+    result.success(map);
+  }
+
+  /** Só lê a permissão de tela cheia (Android 14+), sem abrir as configurações. */
+  private void canUseFullScreenIntent(Result result) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      result.success(true);
+      return;
+    }
+    NotificationManager notificationManager =
+        (NotificationManager) applicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+    result.success(notificationManager.canUseFullScreenIntent());
   }
 
   private void setCanScheduleExactNotifications(Result result) {

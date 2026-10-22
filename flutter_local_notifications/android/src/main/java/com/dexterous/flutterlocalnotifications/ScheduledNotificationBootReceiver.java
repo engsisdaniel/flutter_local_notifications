@@ -16,7 +16,10 @@ public class ScheduledNotificationBootReceiver extends BroadcastReceiver {
       if (action.equals(android.content.Intent.ACTION_BOOT_COMPLETED)
           || action.equals(Intent.ACTION_MY_PACKAGE_REPLACED)
           || action.equals("android.intent.action.QUICKBOOT_POWERON")
-          || action.equals("com.htc.intent.action.QUICKBOOT_POWERON")) {
+          || action.equals("com.htc.intent.action.QUICKBOOT_POWERON")
+          // Mudança manual de hora ou de fuso: alarmes de horário local precisam ser refeitos.
+          || action.equals(Intent.ACTION_TIME_CHANGED)
+          || action.equals(Intent.ACTION_TIMEZONE_CHANGED)) {
         FlutterLocalNotificationsPlugin.rescheduleNotifications(context);
       }
     }

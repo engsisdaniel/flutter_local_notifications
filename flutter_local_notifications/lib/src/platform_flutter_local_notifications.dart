@@ -650,6 +650,24 @@ class AndroidFlutterLocalNotificationsPlugin
   Future<bool?> canScheduleExactNotifications() async =>
       await _channel.invokeMethod<bool>('canScheduleExactNotifications');
 
+  /// Só lê a permissão de notificação em tela cheia (Android 14+), sem abrir
+  /// as configurações. Abaixo do Android 14 é sempre verdadeiro.
+  Future<bool> canUseFullScreenIntent() async =>
+      await _channel.invokeMethod<bool>('canUseFullScreenIntent') ?? true;
+
+  /// Para o som de alarme nativo ([AndroidAlarmSound]) e remove a
+  /// notificação do alarme. Sem efeito se nada estiver tocando.
+  Future<void> stopAlarmSound() =>
+      _channel.invokeMethod<void>('stopAlarmSound');
+
+  /// Alarme com som nativo tocando agora, como `{id, payload}`; nulo se
+  /// nenhum estiver tocando.
+  Future<Map<String, Object?>?> getPlayingAlarm() async {
+    final Map<Object?, Object?>? result =
+        await _channel.invokeMethod<Map<Object?, Object?>>('getPlayingAlarm');
+    return result?.cast<String, Object?>();
+  }
+
   /// Returns whether the app can post promoted ongoing ("Live Update")
   /// notifications.
   ///
