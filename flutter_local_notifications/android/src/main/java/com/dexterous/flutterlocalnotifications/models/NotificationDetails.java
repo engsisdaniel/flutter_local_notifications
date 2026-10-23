@@ -226,6 +226,7 @@ public class NotificationDetails implements Serializable {
 
   /** Som de alarme nativo (extensão do fork); nulo para notificação comum. */
   public AlarmSound alarmSound;
+
   public Integer dismissIsolate;
   public String shortcutId;
   public String subText;

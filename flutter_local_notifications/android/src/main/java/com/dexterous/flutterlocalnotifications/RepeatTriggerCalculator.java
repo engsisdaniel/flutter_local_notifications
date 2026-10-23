@@ -37,8 +37,8 @@ final class RepeatTriggerCalculator {
    * @param firstTrigger primeiro disparo agendado (âncora da série)
    * @param repeatMillis intervalo em milissegundos; ignorado quando [customRepeatInterval] é
    *     "Monthly"/"Annually"
-   * @param daysOfWeek dias permitidos no formato de {@link java.util.Calendar} (1 = domingo); nulo ou
-   *     vazio = todos
+   * @param daysOfWeek dias permitidos no formato de {@link java.util.Calendar} (1 = domingo); nulo
+   *     ou vazio = todos
    * @param startTime início da janela "HH:mm"; com [endTime], restringe o horário
    */
   static long next(
@@ -83,9 +83,7 @@ final class RepeatTriggerCalculator {
     // --- Avanço passo a passo até um horário válido ---
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       long millis = trigger.toInstant().toEpochMilli();
-      if (millis >= now
-          && isValidDay(trigger, days)
-          && isInWindow(trigger, startTime, endTime)) {
+      if (millis >= now && isValidDay(trigger, days) && isInWindow(trigger, startTime, endTime)) {
         return millis;
       }
       steps++;
