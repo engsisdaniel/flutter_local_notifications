@@ -241,8 +241,8 @@ public class FlutterLocalNotificationsPlugin
    *
    * <p>Ligado só nos caminhos de segundo plano (boot e cadeia de repetição), onde não há quem trate
    * a exceção. Antes a exceção apagava a notificação do cache e a tarefa parava de alertar para
-   * sempre; atrasar é melhor que perder. Chamadas vindas do Dart continuam recebendo a exceção, para
-   * o app saber que precisa pedir a permissão.
+   * sempre; atrasar é melhor que perder. Chamadas vindas do Dart continuam recebendo a exceção,
+   * para o app saber que precisa pedir a permissão.
    */
   private static boolean fallbackToInexact = false;
 

@@ -26,8 +26,7 @@ public class RepeatTriggerCalculatorTest {
   public void intervaloZeroNaoTravaEViraDiario() {
     long now = at(2026, 5, 10, 12, 0);
     long next =
-        RepeatTriggerCalculator.next(
-            at(2026, 5, 1, 9, 0), now, 0, null, null, null, null, LISBON);
+        RepeatTriggerCalculator.next(at(2026, 5, 1, 9, 0), now, 0, null, null, null, null, LISBON);
     assertEquals(at(2026, 5, 11, 9, 0), next);
   }
 
@@ -85,8 +84,7 @@ public class RepeatTriggerCalculatorTest {
     long now = at(2026, 5, 10, 12, 0);
     long first = at(2026, 5, 10, 15, 0);
     assertEquals(
-        first,
-        RepeatTriggerCalculator.next(first, now, DAY, null, null, null, null, LISBON));
+        first, RepeatTriggerCalculator.next(first, now, DAY, null, null, null, null, LISBON));
   }
 
   @Test

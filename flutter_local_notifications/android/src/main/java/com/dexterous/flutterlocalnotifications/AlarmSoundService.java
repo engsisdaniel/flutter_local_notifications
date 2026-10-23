@@ -160,8 +160,7 @@ public class AlarmSoundService extends Service {
             details.id,
             stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-    String label =
-        details.alarmSound.stopLabel != null ? details.alarmSound.stopLabel : "Stop";
+    String label = details.alarmSound.stopLabel != null ? details.alarmSound.stopLabel : "Stop";
     Notification.Action stop =
         new Notification.Action.Builder(
                 Icon.createWithResource(this, android.R.drawable.ic_lock_idle_alarm),
@@ -268,7 +267,8 @@ public class AlarmSoundService extends Service {
 
   private void startVibration() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-      VibratorManager manager = (VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+      VibratorManager manager =
+          (VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
       vibrator = manager == null ? null : manager.getDefaultVibrator();
     } else {
       vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
