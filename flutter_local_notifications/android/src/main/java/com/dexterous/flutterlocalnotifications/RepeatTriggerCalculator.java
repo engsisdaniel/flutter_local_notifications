@@ -66,10 +66,10 @@ final class RepeatTriggerCalculator {
    * Como {@link #next(long, long, long, String, int[], String, String, ZoneId)}, pulando as
    * ocorrências em [skipTriggers].
    *
-   * <p>O app grava ali as ocorrências que a pessoa pulou ou remarcou. A série nativa calcula sozinha
-   * o disparo seguinte, sem o app aberto, então a exceção precisa estar aqui: reancorar a série
-   * pelo app não basta quando a ocorrência pulada não é a próxima. A comparação é por minuto, como
-   * no app.
+   * <p>O app grava ali as ocorrências que a pessoa pulou ou remarcou. A série nativa calcula
+   * sozinha o disparo seguinte, sem o app aberto, então a exceção precisa estar aqui: reancorar a
+   * série pelo app não basta quando a ocorrência pulada não é a próxima. A comparação é por minuto,
+   * como no app.
    *
    * @param skipTriggers instantes (epoch millis) que não disparam; nulo ou vazio = nenhum
    */

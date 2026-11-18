@@ -182,6 +182,7 @@ public class NotificationDetails implements Serializable {
 
   /** Ocorrências da série (epoch millis) que não disparam; ver {@code RepeatTriggerCalculator}. */
   public long[] skipTriggers;
+
   public Integer repeatIntervalMilliseconds;
   public Time repeatTime;
   public Long millisecondsSinceEpoch;
