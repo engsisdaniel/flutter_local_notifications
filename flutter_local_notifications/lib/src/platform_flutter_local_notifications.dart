@@ -414,9 +414,14 @@ class AndroidFlutterLocalNotificationsPlugin
     String? startTime, // Horário inicial em que pode tocar o alarme: "HH:mm"
     String? endTime, // Horário final em que pode tocar o alarme: "HH:mm"
     AndroidScheduleMode scheduleMode = AndroidScheduleMode.exact,
+    // Ocorrências da série que não disparam (puladas ou remarcadas no app).
+    List<DateTime>? skipTriggers,
   }) async {
     validateId(id);
     await _channel.invokeMethod('periodicallyShow', <String, Object?>{
+      'skipTriggers': skipTriggers
+          ?.map((DateTime d) => d.millisecondsSinceEpoch)
+          .toList(),
       'id': id,
       'title': title,
       'body': body,

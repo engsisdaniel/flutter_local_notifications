@@ -518,6 +518,8 @@ class FlutterLocalNotificationsPlugin {
     String? endTime,
     int? repeatMinutes, // Minutos até o próximo alarme
     String? customRepeatInterval,
+    // Só Android: ocorrências da série que não disparam.
+    List<DateTime>? skipTriggers,
   }) async {
     if (kIsWeb) {
       await resolvePlatformSpecificImplementation<
@@ -549,6 +551,7 @@ class FlutterLocalNotificationsPlugin {
             startTime: startTime,
             endTime: endTime,
             scheduleMode: androidScheduleMode,
+            skipTriggers: skipTriggers,
           );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       await resolvePlatformSpecificImplementation<

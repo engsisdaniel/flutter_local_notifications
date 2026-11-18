@@ -40,6 +40,7 @@ public class NotificationDetails implements Serializable {
   private static final String DAYS_OF_WEEK = "daysOfWeek";
   private static final String START_TIME = "startTime";
   private static final String END_TIME = "endTime";
+  private static final String SKIP_TRIGGERS = "skipTriggers";
   private static final String PLATFORM_SPECIFICS = "platformSpecifics";
   private static final String AUTO_CANCEL = "autoCancel";
   private static final String ONGOING = "ongoing";
@@ -178,6 +179,9 @@ public class NotificationDetails implements Serializable {
   public int[] daysOfWeek;
   public String startTime;
   public String endTime;
+
+  /** Ocorrências da série (epoch millis) que não disparam; ver {@code RepeatTriggerCalculator}. */
+  public long[] skipTriggers;
   public Integer repeatIntervalMilliseconds;
   public Time repeatTime;
   public Long millisecondsSinceEpoch;
@@ -282,6 +286,12 @@ public class NotificationDetails implements Serializable {
     }
     if (arguments.containsKey(END_TIME)) {
       notificationDetails.endTime = (String) arguments.get(END_TIME);
+    }
+    if (arguments.get(SKIP_TRIGGERS) != null) {
+      // O canal entrega Integer ou Long conforme o tamanho do número.
+      ArrayList<?> skipList = (ArrayList<?>) arguments.get(SKIP_TRIGGERS);
+      notificationDetails.skipTriggers =
+          skipList.stream().mapToLong(x -> ((Number) x).longValue()).toArray();
     }
     if (arguments.containsKey(REPEAT_INTERVAL_MILLISECONDS)) {
       notificationDetails.repeatIntervalMilliseconds =

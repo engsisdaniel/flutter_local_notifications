@@ -97,4 +97,56 @@ public class RepeatTriggerCalculatorTest {
     assertTrue(next >= now && next - now <= 60_000);
     assertTrue("demorou demais", System.nanoTime() - start < 500_000_000L);
   }
+
+  @Test
+  public void pulaAOcorrenciaMarcada() {
+    // Toda sexta às 18h; a sexta 15/05 foi pulada.
+    long now = at(2026, 5, 13, 12, 0);
+    long next =
+        RepeatTriggerCalculator.next(
+            at(2026, 5, 1, 18, 0),
+            now,
+            7 * DAY,
+            null,
+            null,
+            null,
+            null,
+            new long[] {at(2026, 5, 15, 18, 0)},
+            LISBON);
+    assertEquals(at(2026, 5, 22, 18, 0), next);
+  }
+
+  @Test
+  public void pularComparaPeloMinuto() {
+    long now = at(2026, 5, 13, 12, 0);
+    long next =
+        RepeatTriggerCalculator.next(
+            at(2026, 5, 1, 18, 0),
+            now,
+            7 * DAY,
+            null,
+            null,
+            null,
+            null,
+            new long[] {at(2026, 5, 15, 18, 0) + 30_000},
+            LISBON);
+    assertEquals(at(2026, 5, 22, 18, 0), next);
+  }
+
+  @Test
+  public void pularOutraDataNaoMudaOProximo() {
+    long now = at(2026, 5, 13, 12, 0);
+    long next =
+        RepeatTriggerCalculator.next(
+            at(2026, 5, 1, 18, 0),
+            now,
+            7 * DAY,
+            null,
+            null,
+            null,
+            null,
+            new long[] {at(2026, 5, 29, 18, 0)},
+            LISBON);
+    assertEquals(at(2026, 5, 15, 18, 0), next);
+  }
 }

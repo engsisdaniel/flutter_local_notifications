@@ -893,6 +893,7 @@ public class FlutterLocalNotificationsPlugin
         notificationDetails.daysOfWeek,
         notificationDetails.startTime,
         notificationDetails.endTime,
+        notificationDetails.skipTriggers,
         java.time.ZoneId.systemDefault());
   }
 

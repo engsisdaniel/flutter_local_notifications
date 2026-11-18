@@ -50,6 +50,39 @@ final class RepeatTriggerCalculator {
       String startTime,
       String endTime,
       ZoneId zone) {
+    return next(
+        firstTrigger,
+        now,
+        repeatMillis,
+        customRepeatInterval,
+        daysOfWeek,
+        startTime,
+        endTime,
+        null,
+        zone);
+  }
+
+  /**
+   * Como {@link #next(long, long, long, String, int[], String, String, ZoneId)}, pulando as
+   * ocorrências em [skipTriggers].
+   *
+   * <p>O app grava ali as ocorrências que a pessoa pulou ou remarcou. A série nativa calcula sozinha
+   * o disparo seguinte, sem o app aberto, então a exceção precisa estar aqui: reancorar a série
+   * pelo app não basta quando a ocorrência pulada não é a próxima. A comparação é por minuto, como
+   * no app.
+   *
+   * @param skipTriggers instantes (epoch millis) que não disparam; nulo ou vazio = nenhum
+   */
+  static long next(
+      long firstTrigger,
+      long now,
+      long repeatMillis,
+      String customRepeatInterval,
+      int[] daysOfWeek,
+      String startTime,
+      String endTime,
+      long[] skipTriggers,
+      ZoneId zone) {
     final boolean monthly = "Monthly".equals(customRepeatInterval);
     final boolean annually = "Annually".equals(customRepeatInterval);
     // Intervalo inválido vira diário: melhor alertar todo dia do que travar o receiver.
@@ -83,7 +116,10 @@ final class RepeatTriggerCalculator {
     // --- Avanço passo a passo até um horário válido ---
     for (int i = 0; i < MAX_ITERATIONS; i++) {
       long millis = trigger.toInstant().toEpochMilli();
-      if (millis >= now && isValidDay(trigger, days) && isInWindow(trigger, startTime, endTime)) {
+      if (millis >= now
+          && isValidDay(trigger, days)
+          && isInWindow(trigger, startTime, endTime)
+          && !isSkipped(millis, skipTriggers)) {
         return millis;
       }
       steps++;
@@ -102,6 +138,15 @@ final class RepeatTriggerCalculator {
 
     Log.e(TAG, "Sem horário válido após " + MAX_ITERATIONS + " passos; adiando um dia.");
     return now + DAY_MILLIS;
+  }
+
+  static boolean isSkipped(long millis, long[] skipTriggers) {
+    if (skipTriggers == null) return false;
+    final long minute = Math.floorDiv(millis, 60_000L);
+    for (long skip : skipTriggers) {
+      if (Math.floorDiv(skip, 60_000L) == minute) return true;
+    }
+    return false;
   }
 
   static boolean isValidDay(ZonedDateTime time, int[] daysOfWeek) {
